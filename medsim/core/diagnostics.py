@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import random
 import math
+from ..core.session import PatientState
 
 
 @dataclass
@@ -51,7 +52,7 @@ class AdvancedDiagnosticSystem:
         """initialize comprehensive lab test library"""
         tests = {}
         
-        # complete blood count (cbc)
+        # Complete blood count (cbc)
         tests["wbc"] = LabTest(
             name="White Blood Cell Count",
             category="CBC",
@@ -108,7 +109,7 @@ class AdvancedDiagnosticSystem:
             clinical_significance="Decreased in thrombocytopenia; increased in reactive thrombocytosis"
         )
         
-        # basic metabolic panel (bmp)
+        # Basic metabolic panel (bmp)
         tests["sodium"] = LabTest(
             name="Sodium",
             category="BMP",
@@ -181,7 +182,7 @@ class AdvancedDiagnosticSystem:
             clinical_significance="Elevated in diabetes; decreased in hypoglycemia"
         )
         
-        # cardiac enzymes
+        # Cardiac enzymes
         tests["troponin"] = LabTest(
             name="Troponin I",
             category="Cardiac",
@@ -198,117 +199,40 @@ class AdvancedDiagnosticSystem:
             category="Cardiac",
             normal_range=(0.0, 5.0),
             unit="ng/mL",
-            critical_high=25.0,
-            turnaround_time=60,
-            description="Creatine kinase myocardial band",
+            critical_high=10.0,
+            description="Creatine kinase MB fraction",
             clinical_significance="Elevated in myocardial infarction"
         )
         
         tests["bnp"] = LabTest(
-            name="B-Type Natriuretic Peptide",
+            name="B-type Natriuretic Peptide",
             category="Cardiac",
             normal_range=(0, 100),
             unit="pg/mL",
             critical_high=500,
-            turnaround_time=90,
             description="Marker for heart failure",
             clinical_significance="Elevated in heart failure, volume overload"
         )
         
-        # liver function tests
-        tests["alt"] = LabTest(
-            name="Alanine Aminotransferase",
-            category="Liver",
-            normal_range=(7, 55),
-            unit="U/L",
-            critical_high=300,
-            description="Liver enzyme",
-            clinical_significance="Elevated in liver injury, hepatitis"
-        )
-        
-        tests["ast"] = LabTest(
-            name="Aspartate Aminotransferase",
-            category="Liver",
-            normal_range=(8, 48),
-            unit="U/L",
-            critical_high=300,
-            description="Liver enzyme",
-            clinical_significance="Elevated in liver injury, muscle damage"
-        )
-        
-        tests["alkaline_phosphatase"] = LabTest(
-            name="Alkaline Phosphatase",
-            category="Liver",
-            normal_range=(44, 147),
-            unit="U/L",
-            description="Liver enzyme",
-            clinical_significance="Elevated in cholestasis, bone disease"
-        )
-        
-        tests["bilirubin_total"] = LabTest(
-            name="Total Bilirubin",
-            category="Liver",
-            normal_range=(0.3, 1.2),
-            unit="mg/dL",
-            critical_high=5.0,
-            description="Total bilirubin",
-            clinical_significance="Elevated in liver disease, hemolysis"
-        )
-        
-        # inflammatory markers
-        tests["c_reactive_protein"] = LabTest(
-            name="C-Reactive Protein",
-            category="Inflammatory",
-            normal_range=(0, 3),
-            unit="mg/L",
-            critical_high=50,
-            turnaround_time=60,
-            description="Acute phase reactant",
-            clinical_significance="Elevated in inflammation, infection"
-        )
-        
-        tests["esr"] = LabTest(
-            name="Erythrocyte Sedimentation Rate",
-            category="Inflammatory",
-            normal_range=(0, 20),
-            unit="mm/hr",
-            critical_high=100,
-            turnaround_time=60,
-            description="Non-specific inflammatory marker",
-            clinical_significance="Elevated in inflammation, infection, malignancy"
-        )
-        
-        tests["procalcitonin"] = LabTest(
-            name="Procalcitonin",
-            category="Inflammatory",
-            normal_range=(0, 0.1),
-            unit="ng/mL",
-            critical_high=2.0,
-            turnaround_time=90,
-            description="Marker for bacterial infection",
-            clinical_significance="Elevated in bacterial infection, sepsis"
-        )
-        
-        # coagulation studies
+        # Coagulation studies
         tests["pt"] = LabTest(
             name="Prothrombin Time",
             category="Coagulation",
-            normal_range=(11, 13.5),
+            normal_range=(11.0, 13.5),
             unit="seconds",
-            critical_high=20,
-            turnaround_time=45,
+            critical_high=20.0,
             description="Measures extrinsic coagulation pathway",
-            clinical_significance="Prolonged in warfarin use, liver disease"
+            clinical_significance="Prolonged in warfarin use, liver disease, DIC"
         )
         
         tests["inr"] = LabTest(
             name="International Normalized Ratio",
             category="Coagulation",
             normal_range=(0.9, 1.1),
-            unit="ratio",
+            unit="",
             critical_high=5.0,
-            description="Standardized prothrombin time",
-            clinical_significance="Target 2-3 for warfarin therapy"
+            description="Standardized measure of PT",
+            clinical_significance="Target 2-3 for most anticoagulation"
         )
         
         tests["aptt"] = LabTest(
@@ -317,12 +241,31 @@ class AdvancedDiagnosticSystem:
             normal_range=(25, 35),
             unit="seconds",
             critical_high=60,
-            turnaround_time=45,
             description="Measures intrinsic coagulation pathway",
-            clinical_significance="Prolonged in heparin use, hemophilia"
+            clinical_significance="Prolonged in heparin use, hemophilia, DIC"
         )
         
-        # arterial blood gas
+        tests["fibrinogen"] = LabTest(
+            name="Fibrinogen",
+            category="Coagulation",
+            normal_range=(200, 400),
+            unit="mg/dL",
+            critical_low=100,
+            description="Essential clotting factor",
+            clinical_significance="Decreased in DIC, liver disease, congenital deficiency"
+        )
+        
+        tests["d_dimer"] = LabTest(
+            name="D-Dimer",
+            category="Coagulation",
+            normal_range=(0, 0.5),
+            unit="μg/mL",
+            critical_high=2.0,
+            description="Fibrin degradation product",
+            clinical_significance="Elevated in DVT, PE, DIC, inflammation"
+        )
+        
+        # Arterial blood gas
         tests["ph"] = LabTest(
             name="pH",
             category="ABG",
@@ -342,8 +285,7 @@ class AdvancedDiagnosticSystem:
             unit="mmHg",
             critical_low=20,
             critical_high=60,
-            turnaround_time=15,
-            description="Partial pressure of carbon dioxide",
+            description="Partial pressure of CO2",
             clinical_significance="Elevated in respiratory acidosis; decreased in respiratory alkalosis"
         )
         
@@ -353,8 +295,7 @@ class AdvancedDiagnosticSystem:
             normal_range=(80, 100),
             unit="mmHg",
             critical_low=60,
-            turnaround_time=15,
-            description="Partial pressure of oxygen",
+            description="Partial pressure of O2",
             clinical_significance="Decreased in hypoxemia, respiratory failure"
         )
         
@@ -365,52 +306,204 @@ class AdvancedDiagnosticSystem:
             unit="mEq/L",
             critical_low=15,
             critical_high=35,
-            turnaround_time=15,
-            description="Bicarbonate from blood gas",
+            description="Bicarbonate concentration",
             clinical_significance="Decreased in metabolic acidosis; increased in metabolic alkalosis"
         )
         
-        # additional specialized tests
-        tests["d_dimer"] = LabTest(
-            name="D-Dimer",
-            category="Coagulation",
-            normal_range=(0, 0.5),
+        tests["base_excess"] = LabTest(
+            name="Base Excess",
+            category="ABG",
+            normal_range=(-2, 2),
+            unit="mEq/L",
+            description="Metabolic acid-base status",
+            clinical_significance="Negative in metabolic acidosis; positive in metabolic alkalosis"
+        )
+        
+        # Liver function tests
+        tests["ast"] = LabTest(
+            name="Aspartate Aminotransferase",
+            category="Liver",
+            normal_range=(10, 40),
+            unit="U/L",
+            critical_high=200,
+            description="Liver enzyme",
+            clinical_significance="Elevated in liver disease, muscle injury, heart failure"
+        )
+        
+        tests["alt"] = LabTest(
+            name="Alanine Aminotransferase",
+            category="Liver",
+            normal_range=(7, 56),
+            unit="U/L",
+            critical_high=200,
+            description="Liver-specific enzyme",
+            clinical_significance="Elevated in liver disease, hepatitis"
+        )
+        
+        tests["alk_phos"] = LabTest(
+            name="Alkaline Phosphatase",
+            category="Liver",
+            normal_range=(44, 147),
+            unit="U/L",
+            description="Bone and liver enzyme",
+            clinical_significance="Elevated in cholestasis, bone disease, pregnancy"
+        )
+        
+        tests["bilirubin_total"] = LabTest(
+            name="Total Bilirubin",
+            category="Liver",
+            normal_range=(0.3, 1.2),
+            unit="mg/dL",
+            critical_high=5.0,
+            description="Breakdown product of heme",
+            clinical_significance="Elevated in liver disease, hemolysis, biliary obstruction"
+        )
+        
+        tests["albumin"] = LabTest(
+            name="Albumin",
+            category="Liver",
+            normal_range=(3.4, 5.4),
+            unit="g/dL",
+            critical_low=2.0,
+            description="Major plasma protein",
+            clinical_significance="Decreased in liver disease, malnutrition, inflammation"
+        )
+        
+        # Toxicology
+        tests["acetaminophen"] = LabTest(
+            name="Acetaminophen Level",
+            category="Toxicology",
+            normal_range=(0, 10),
             unit="μg/mL",
-            critical_high=2.0,
-            turnaround_time=60,
-            description="Fibrin degradation product",
-            clinical_significance="Elevated in DVT, PE, DIC"
+            critical_high=150,
+            turnaround_time=120,
+            description="Acetaminophen concentration",
+            clinical_significance="Elevated in overdose, risk of hepatotoxicity"
         )
         
-        tests["troponin_high_sensitivity"] = LabTest(
-            name="High-Sensitivity Troponin",
-            category="Cardiac",
-            normal_range=(0, 14),
-            unit="ng/L",
-            critical_high=50,
-            turnaround_time=60,
-            description="High-sensitivity cardiac troponin",
-            clinical_significance="More sensitive marker for myocardial injury"
+        tests["salicylate"] = LabTest(
+            name="Salicylate Level",
+            category="Toxicology",
+            normal_range=(0, 20),
+            unit="mg/dL",
+            critical_high=40,
+            description="Aspirin/salicylate concentration",
+            clinical_significance="Elevated in overdose, risk of toxicity"
         )
         
-        tests["nt_probnp"] = LabTest(
-            name="NT-proBNP",
+        tests["ethanol"] = LabTest(
+            name="Ethanol Level",
+            category="Toxicology",
+            normal_range=(0, 80),
+            unit="mg/dL",
+            critical_high=300,
+            description="Blood alcohol concentration",
+            clinical_significance="Elevated in alcohol intoxication"
+        )
+        
+        # Cultures
+        tests["blood_culture"] = LabTest(
+            name="Blood Culture",
+            category="Microbiology",
+            normal_range=(0, 0),
+            unit="",
+            turnaround_time=1440,  # 24 hours
+            description="Bacterial culture of blood",
+            clinical_significance="Positive in bacteremia, sepsis"
+        )
+        
+        tests["urine_culture"] = LabTest(
+            name="Urine Culture",
+            category="Microbiology",
+            normal_range=(0, 0),
+            unit="",
+            turnaround_time=1440,
+            description="Bacterial culture of urine",
+            clinical_significance="Positive in UTI"
+        )
+        
+        tests["sputum_culture"] = LabTest(
+            name="Sputum Culture",
+            category="Microbiology",
+            normal_range=(0, 0),
+            unit="",
+            turnaround_time=1440,
+            description="Bacterial culture of sputum",
+            clinical_significance="Positive in pneumonia"
+        )
+        
+        # Point-of-care tests
+        tests["bedside_glucose"] = LabTest(
+            name="Bedside Glucose",
+            category="POC",
+            normal_range=(70, 140),
+            unit="mg/dL",
+            critical_low=40,
+            critical_high=400,
+            turnaround_time=2,
+            description="Capillary glucose measurement",
+            clinical_significance="Immediate glucose assessment"
+        )
+        
+        tests["troponin_poc"] = LabTest(
+            name="Point-of-Care Troponin",
+            category="POC",
+            normal_range=(0, 0.04),
+            unit="ng/mL",
+            critical_high=0.5,
+            turnaround_time=15,
+            description="Rapid troponin assay",
+            clinical_significance="Quick assessment for myocardial injury"
+        )
+        
+        tests["urine_dip"] = LabTest(
+            name="Urine Dipstick",
+            category="POC",
+            normal_range=(0, 0),
+            unit="",
+            turnaround_time=5,
+            description="Urine analysis",
+            clinical_significance="Screening for UTI, proteinuria, hematuria"
+        )
+        
+        # Specialty panels
+        tests["thyroid_panel"] = LabTest(
+            name="Thyroid Function Panel",
+            category="Endocrine",
+            normal_range=(0, 0),
+            unit="",
+            turnaround_time=180,
+            description="TSH, T4, T3",
+            clinical_significance="Assessment of thyroid function"
+        )
+        
+        tests["lipid_panel"] = LabTest(
+            name="Lipid Panel",
+            category="Cardiovascular",
+            normal_range=(0, 0),
+            unit="",
+            turnaround_time=240,
+            description="Total cholesterol, HDL, LDL, triglycerides",
+            clinical_significance="Cardiovascular risk assessment"
+        )
+        
+        tests["cardiac_panel"] = LabTest(
+            name="Cardiac Panel",
             category="Cardiac",
-            normal_range=(0, 125),
-            unit="pg/mL",
-            critical_high=450,
-            turnaround_time=90,
-            description="N-terminal pro-BNP",
-            clinical_significance="Elevated in heart failure"
+            normal_range=(0, 0),
+            unit="",
+            turnaround_time=60,
+            description="Troponin, CK-MB, BNP",
+            clinical_significance="Comprehensive cardiac assessment"
         )
         
         return tests
     
     def _initialize_imaging_studies(self) -> Dict[str, ImagingStudy]:
-        """initialize comprehensive imaging study library"""
+        """initialize comprehensive imaging studies"""
         studies = {}
         
-        # chest imaging
+        # Chest imaging
         studies["chest_xray"] = ImagingStudy(
             name="Chest X-Ray",
             modality="X-Ray",
@@ -418,8 +511,8 @@ class AdvancedDiagnosticSystem:
             turnaround_time=30,
             cost=150.0,
             description="Standard chest radiograph",
-            findings_template="Chest X-ray shows {findings}. {additional_findings}",
-            contraindications=["pregnancy"]
+            findings_template="Lungs: {lung_findings}. Heart: {heart_findings}. Mediastinum: {mediastinal_findings}. Bones: {bone_findings}.",
+            contraindications=["pregnancy (relative)"]
         )
         
         studies["chest_ct"] = ImagingStudy(
@@ -428,157 +521,225 @@ class AdvancedDiagnosticSystem:
             body_part="Chest",
             turnaround_time=60,
             cost=800.0,
-            description="Computed tomography of the chest",
-            findings_template="Chest CT demonstrates {findings}. {additional_findings}",
-            contraindications=["pregnancy", "contrast_allergy"]
+            description="Computed tomography of chest",
+            findings_template="Lungs: {lung_findings}. Mediastinum: {mediastinal_findings}. Pulmonary vessels: {vessel_findings}. Pleura: {pleural_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
         )
         
-        studies["chest_ct_angiogram"] = ImagingStudy(
-            name="Chest CT Angiogram",
+        studies["chest_ct_pe"] = ImagingStudy(
+            name="Chest CT Pulmonary Angiogram",
             modality="CT",
             body_part="Chest",
-            turnaround_time=90,
+            turnaround_time=60,
             cost=1200.0,
-            description="CT angiogram for pulmonary embolism evaluation",
-            findings_template="CT angiogram shows {findings}. {additional_findings}",
-            contraindications=["pregnancy", "contrast_allergy", "renal_insufficiency"]
+            description="CT angiography for pulmonary embolism",
+            findings_template="Pulmonary arteries: {artery_findings}. Lungs: {lung_findings}. Heart: {heart_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
         )
         
-        # cardiac imaging
+        # Cardiac imaging
         studies["ecg"] = ImagingStudy(
             name="Electrocardiogram",
             modality="ECG",
             body_part="Heart",
-            turnaround_time=15,
+            turnaround_time=10,
             cost=100.0,
             description="12-lead electrocardiogram",
-            findings_template="ECG shows {findings}. {additional_findings}",
+            findings_template="Rate: {rate} bpm. Rhythm: {rhythm}. Axis: {axis}. Intervals: {intervals}. ST segments: {st_changes}. T waves: {t_waves}.",
             contraindications=[]
         )
         
-        studies["echocardiogram"] = ImagingStudy(
+        studies["echo"] = ImagingStudy(
             name="Echocardiogram",
             modality="Ultrasound",
             body_part="Heart",
-            turnaround_time=120,
+            turnaround_time=45,
             cost=600.0,
             description="Transthoracic echocardiogram",
-            findings_template="Echocardiogram demonstrates {findings}. {additional_findings}",
+            findings_template="EF: {ef}%. Valves: {valve_findings}. Chambers: {chamber_findings}. Pericardium: {pericardial_findings}.",
             contraindications=[]
         )
         
         studies["stress_test"] = ImagingStudy(
             name="Stress Test",
-            modality="Nuclear",
+            modality="Nuclear Medicine",
             body_part="Heart",
-            turnaround_time=180,
+            turnaround_time=120,
             cost=1500.0,
             description="Nuclear stress test",
-            findings_template="Stress test shows {findings}. {additional_findings}",
-            contraindications=["acute_coronary_syndrome", "unstable_angina"]
+            findings_template="Stress images: {stress_findings}. Rest images: {rest_findings}. Ejection fraction: {ef}%. Reversibility: {reversibility}.",
+            contraindications=["acute MI", "unstable angina", "severe aortic stenosis"]
         )
         
-        # abdominal imaging
-        studies["abdominal_xray"] = ImagingStudy(
-            name="Abdominal X-Ray",
-            modality="X-Ray",
-            body_part="Abdomen",
-            turnaround_time=30,
-            cost=150.0,
-            description="Abdominal radiograph",
-            findings_template="Abdominal X-ray shows {findings}. {additional_findings}",
-            contraindications=["pregnancy"]
-        )
-        
+        # Abdominal imaging
         studies["abdominal_ct"] = ImagingStudy(
             name="Abdominal CT",
             modality="CT",
             body_part="Abdomen",
             turnaround_time=60,
             cost=800.0,
-            description="Computed tomography of the abdomen",
-            findings_template="Abdominal CT demonstrates {findings}. {additional_findings}",
-            contraindications=["pregnancy", "contrast_allergy"]
+            description="Computed tomography of abdomen",
+            findings_template="Liver: {liver_findings}. Spleen: {spleen_findings}. Kidneys: {kidney_findings}. Bowel: {bowel_findings}. Vessels: {vessel_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
         )
         
         studies["abdominal_ultrasound"] = ImagingStudy(
             name="Abdominal Ultrasound",
             modality="Ultrasound",
             body_part="Abdomen",
-            turnaround_time=45,
-            cost=400.0,
+            turnaround_time=30,
+            cost=300.0,
             description="Abdominal ultrasound",
-            findings_template="Abdominal ultrasound shows {findings}. {additional_findings}",
+            findings_template="Liver: {liver_findings}. Gallbladder: {gb_findings}. Kidneys: {kidney_findings}. Spleen: {spleen_findings}. Pancreas: {pancreas_findings}.",
             contraindications=[]
         )
         
-        # neurological imaging
+        studies["renal_ultrasound"] = ImagingStudy(
+            name="Renal Ultrasound",
+            modality="Ultrasound",
+            body_part="Kidneys",
+            turnaround_time=30,
+            cost=250.0,
+            description="Kidney ultrasound",
+            findings_template="Right kidney: {right_kidney}. Left kidney: {left_kidney}. Bladder: {bladder_findings}. Hydronephrosis: {hydronephrosis}.",
+            contraindications=[]
+        )
+        
+        # Neurological imaging
         studies["head_ct"] = ImagingStudy(
             name="Head CT",
             modality="CT",
             body_part="Head",
-            turnaround_time=45,
-            cost=600.0,
-            description="Computed tomography of the head",
-            findings_template="Head CT shows {findings}. {additional_findings}",
-            contraindications=["pregnancy"]
-        )
-        
-        studies["brain_mri"] = ImagingStudy(
-            name="Brain MRI",
-            modality="MRI",
-            body_part="Brain",
-            turnaround_time=120,
-            cost=1500.0,
-            description="Magnetic resonance imaging of the brain",
-            findings_template="Brain MRI demonstrates {findings}. {additional_findings}",
-            contraindications=["metallic_implants", "claustrophobia"]
-        )
-        
-        # vascular imaging
-        studies["carotid_ultrasound"] = ImagingStudy(
-            name="Carotid Ultrasound",
-            modality="Ultrasound",
-            body_part="Neck",
-            turnaround_time=60,
-            cost=500.0,
-            description="Carotid artery ultrasound",
-            findings_template="Carotid ultrasound shows {findings}. {additional_findings}",
-            contraindications=[]
-        )
-        
-        studies["venous_ultrasound"] = ImagingStudy(
-            name="Venous Ultrasound",
-            modality="Ultrasound",
-            body_part="Extremities",
-            turnaround_time=45,
-            cost=400.0,
-            description="Venous ultrasound for DVT evaluation",
-            findings_template="Venous ultrasound shows {findings}. {additional_findings}",
-            contraindications=[]
-        )
-        
-        # musculoskeletal imaging
-        studies["bone_xray"] = ImagingStudy(
-            name="Bone X-Ray",
-            modality="X-Ray",
-            body_part="Extremities",
             turnaround_time=30,
-            cost=150.0,
-            description="Bone radiograph",
-            findings_template="Bone X-ray shows {findings}. {additional_findings}",
-            contraindications=["pregnancy"]
+            cost=600.0,
+            description="Computed tomography of head",
+            findings_template="Brain parenchyma: {brain_findings}. Ventricles: {ventricle_findings}. Basal cisterns: {cistern_findings}. Bone: {bone_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
         )
         
-        studies["joint_mri"] = ImagingStudy(
-            name="Joint MRI",
+        studies["head_mri"] = ImagingStudy(
+            name="Head MRI",
             modality="MRI",
-            body_part="Joints",
+            body_part="Head",
             turnaround_time=90,
             cost=1200.0,
-            description="Magnetic resonance imaging of joints",
-            findings_template="Joint MRI demonstrates {findings}. {additional_findings}",
-            contraindications=["metallic_implants", "claustrophobia"]
+            description="Magnetic resonance imaging of head",
+            findings_template="Brain parenchyma: {brain_findings}. White matter: {white_matter}. Ventricles: {ventricle_findings}. Vessels: {vessel_findings}.",
+            contraindications=["metallic implants", "claustrophobia", "pregnancy"]
+        )
+        
+        studies["cervical_spine_ct"] = ImagingStudy(
+            name="Cervical Spine CT",
+            modality="CT",
+            body_part="Neck",
+            turnaround_time=45,
+            cost=500.0,
+            description="CT of cervical spine",
+            findings_template="Alignment: {alignment}. Vertebrae: {vertebrae_findings}. Spinal canal: {canal_findings}. Soft tissues: {soft_tissue_findings}.",
+            contraindications=["pregnancy", "contrast allergy"]
+        )
+        
+        # Vascular imaging
+        studies["aortic_ct"] = ImagingStudy(
+            name="Aortic CT Angiogram",
+            modality="CT",
+            body_part="Aorta",
+            turnaround_time=60,
+            cost=1000.0,
+            description="CT angiography of aorta",
+            findings_template="Aortic diameter: {diameter} cm. Aortic wall: {wall_findings}. Branch vessels: {branch_findings}. Dissection: {dissection_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
+        )
+        
+        studies["venous_doppler"] = ImagingStudy(
+            name="Venous Doppler",
+            modality="Ultrasound",
+            body_part="Extremities",
+            turnaround_time=30,
+            cost=400.0,
+            description="Venous ultrasound for DVT",
+            findings_template="Compressibility: {compressibility}. Flow: {flow_findings}. Thrombus: {thrombus_findings}. Valves: {valve_findings}.",
+            contraindications=[]
+        )
+        
+        studies["arterial_doppler"] = ImagingStudy(
+            name="Arterial Doppler",
+            modality="Ultrasound",
+            body_part="Extremities",
+            turnaround_time=30,
+            cost=400.0,
+            description="Arterial ultrasound",
+            findings_template="Flow velocities: {velocities}. Waveforms: {waveforms}. Stenosis: {stenosis_findings}. Occlusion: {occlusion_findings}.",
+            contraindications=[]
+        )
+        
+        # Trauma imaging
+        studies["fast_exam"] = ImagingStudy(
+            name="FAST Exam",
+            modality="Ultrasound",
+            body_part="Abdomen/Chest",
+            turnaround_time=10,
+            cost=200.0,
+            description="Focused Assessment with Sonography for Trauma",
+            findings_template="RUQ: {ruq_findings}. LUQ: {luq_findings}. Pelvis: {pelvis_findings}. Pericardium: {pericardial_findings}.",
+            contraindications=[]
+        )
+        
+        studies["trauma_pan_scan"] = ImagingStudy(
+            name="Trauma Pan-Scan",
+            modality="CT",
+            body_part="Head/Neck/Chest/Abdomen/Pelvis",
+            turnaround_time=90,
+            cost=2000.0,
+            description="Comprehensive trauma CT",
+            findings_template="Head: {head_findings}. Neck: {neck_findings}. Chest: {chest_findings}. Abdomen: {abdomen_findings}. Pelvis: {pelvis_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
+        )
+        
+        # Interventional procedures
+        studies["angiogram"] = ImagingStudy(
+            name="Angiogram",
+            modality="Fluoroscopy",
+            body_part="Vessels",
+            turnaround_time=120,
+            cost=3000.0,
+            description="Diagnostic angiography",
+            findings_template="Vessel patency: {patency}. Stenosis: {stenosis_findings}. Collaterals: {collateral_findings}. Flow: {flow_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency", "bleeding disorder"]
+        )
+        
+        studies["biopsy"] = ImagingStudy(
+            name="Image-Guided Biopsy",
+            modality="CT/Ultrasound",
+            body_part="Variable",
+            turnaround_time=60,
+            cost=1500.0,
+            description="Percutaneous biopsy",
+            findings_template="Target: {target_findings}. Approach: {approach}. Specimen: {specimen_findings}. Complications: {complications}.",
+            contraindications=["bleeding disorder", "infection at site", "inability to cooperate"]
+        )
+        
+        # Nuclear medicine
+        studies["bone_scan"] = ImagingStudy(
+            name="Bone Scan",
+            modality="Nuclear Medicine",
+            body_part="Skeleton",
+            turnaround_time=180,
+            cost=800.0,
+            description="Technetium bone scan",
+            findings_template="Uptake pattern: {uptake_pattern}. Focal lesions: {focal_findings}. Distribution: {distribution_findings}.",
+            contraindications=["pregnancy", "breastfeeding"]
+        )
+        
+        studies["vq_scan"] = ImagingStudy(
+            name="V/Q Scan",
+            modality="Nuclear Medicine",
+            body_part="Lungs",
+            turnaround_time=120,
+            cost=1000.0,
+            description="Ventilation/perfusion scan",
+            findings_template="Ventilation: {ventilation_findings}. Perfusion: {perfusion_findings}. Mismatch: {mismatch_findings}. Probability: {probability}.",
+            contraindications=["pregnancy", "breastfeeding"]
         )
         
         return studies
@@ -887,4 +1048,385 @@ class AdvancedDiagnosticSystem:
     
     def get_test_history(self) -> List[Dict[str, Any]]:
         """get test history"""
-        return self.test_history.copy() 
+        return self.test_history.copy()
+    
+    def interpret_lab_result(self, test_name: str, value: float, patient_state: PatientState) -> Dict[str, Any]:
+        """interpret lab test results with clinical context"""
+        if test_name not in self.lab_tests:
+            return {"error": "Unknown test"}
+        
+        test = self.lab_tests[test_name]
+        interpretation = {
+            "test_name": test.name,
+            "value": value,
+            "unit": test.unit,
+            "normal_range": test.normal_range,
+            "status": "normal",
+            "clinical_significance": test.clinical_significance,
+            "recommendations": [],
+            "critical_alert": False,
+            "follow_up": []
+        }
+        
+        # determine if result is abnormal
+        if value < test.normal_range[0]:
+            interpretation["status"] = "low"
+            if test.critical_low and value <= test.critical_low:
+                interpretation["status"] = "critical_low"
+                interpretation["critical_alert"] = True
+        elif value > test.normal_range[1]:
+            interpretation["status"] = "high"
+            if test.critical_high and value >= test.critical_high:
+                interpretation["status"] = "critical_high"
+                interpretation["critical_alert"] = True
+        
+        # generate clinical recommendations based on result and patient context
+        interpretation["recommendations"] = self._generate_recommendations(test_name, value, patient_state)
+        interpretation["follow_up"] = self._generate_follow_up(test_name, value, patient_state)
+        
+        return interpretation
+    
+    def _generate_recommendations(self, test_name: str, value: float, patient_state: PatientState) -> List[str]:
+        """generate clinical recommendations based on test results"""
+        recommendations = []
+        
+        if test_name == "troponin" and value > 0.04:
+            recommendations.extend([
+                "Consider acute coronary syndrome",
+                "Order serial troponins",
+                "Obtain ECG immediately",
+                "Consider cardiac catheterization if STEMI"
+            ])
+        
+        elif test_name == "potassium" and value > 6.0:
+            recommendations.extend([
+                "CRITICAL: Hyperkalemia",
+                "Check ECG for peaked T waves",
+                "Consider calcium gluconate",
+                "Consider insulin/dextrose",
+                "Consider sodium bicarbonate"
+            ])
+        
+        elif test_name == "potassium" and value < 3.0:
+            recommendations.extend([
+                "CRITICAL: Hypokalemia",
+                "Check ECG for U waves",
+                "Consider potassium replacement",
+                "Monitor for arrhythmias"
+            ])
+        
+        elif test_name == "sodium" and value < 120:
+            recommendations.extend([
+                "CRITICAL: Severe hyponatremia",
+                "Check for symptoms of cerebral edema",
+                "Consider hypertonic saline",
+                "Monitor neurologic status"
+            ])
+        
+        elif test_name == "glucose" and value > 400:
+            recommendations.extend([
+                "CRITICAL: Severe hyperglycemia",
+                "Check for ketones",
+                "Consider DKA protocol",
+                "Monitor electrolytes"
+            ])
+        
+        elif test_name == "glucose" and value < 40:
+            recommendations.extend([
+                "CRITICAL: Severe hypoglycemia",
+                "Administer dextrose immediately",
+                "Check for underlying cause",
+                "Monitor glucose closely"
+            ])
+        
+        elif test_name == "ph" and value < 7.2:
+            recommendations.extend([
+                "CRITICAL: Severe acidosis",
+                "Identify underlying cause",
+                "Consider bicarbonate therapy",
+                "Monitor respiratory status"
+            ])
+        
+        elif test_name == "platelets" and value < 50:
+            recommendations.extend([
+                "CRITICAL: Severe thrombocytopenia",
+                "Check for bleeding",
+                "Consider platelet transfusion",
+                "Investigate underlying cause"
+            ])
+        
+        elif test_name == "hemoglobin" and value < 7:
+            recommendations.extend([
+                "CRITICAL: Severe anemia",
+                "Consider blood transfusion",
+                "Investigate underlying cause",
+                "Monitor for symptoms"
+            ])
+        
+        elif test_name == "creatinine" and value > 3.0:
+            recommendations.extend([
+                "CRITICAL: Acute kidney injury",
+                "Check for reversible causes",
+                "Monitor fluid status",
+                "Consider nephrology consult"
+            ])
+        
+        elif test_name == "d_dimer" and value > 0.5:
+            recommendations.extend([
+                "Elevated D-dimer",
+                "Consider VTE evaluation",
+                "Order appropriate imaging",
+                "Assess clinical probability"
+            ])
+        
+        elif test_name == "bnp" and value > 400:
+            recommendations.extend([
+                "Elevated BNP",
+                "Consider heart failure",
+                "Assess volume status",
+                "Consider echocardiogram"
+            ])
+        
+        return recommendations
+    
+    def _generate_follow_up(self, test_name: str, value: float, patient_state: PatientState) -> List[str]:
+        """generate follow-up testing recommendations"""
+        follow_up = []
+        
+        if test_name == "troponin" and value > 0.04:
+            follow_up.extend([
+                "Serial troponins in 3-6 hours",
+                "ECG monitoring",
+                "Cardiac catheterization if indicated"
+            ])
+        
+        elif test_name == "d_dimer" and value > 0.5:
+            follow_up.extend([
+                "CT pulmonary angiogram",
+                "Venous doppler ultrasound",
+                "Repeat D-dimer in 1 week if negative"
+            ])
+        
+        elif test_name == "creatinine" and value > 1.5:
+            follow_up.extend([
+                "Repeat creatinine in 24 hours",
+                "Urinalysis",
+                "Renal ultrasound if indicated"
+            ])
+        
+        elif test_name == "glucose" and value > 200:
+            follow_up.extend([
+                "HbA1c",
+                "Fasting glucose",
+                "Diabetes education"
+            ])
+        
+        elif test_name == "hemoglobin" and value < 10:
+            follow_up.extend([
+                "Iron studies",
+                "B12/folate levels",
+                "Consider bone marrow evaluation"
+            ])
+        
+        return follow_up
+    
+    def interpret_imaging_result(self, study_name: str, findings: Dict[str, Any], patient_state: PatientState) -> Dict[str, Any]:
+        """interpret imaging study results with clinical context"""
+        if study_name not in self.imaging_studies:
+            return {"error": "Unknown study"}
+        
+        study = self.imaging_studies[study_name]
+        interpretation = {
+            "study_name": study.name,
+            "modality": study.modality,
+            "findings": findings,
+            "clinical_impression": "",
+            "recommendations": [],
+            "critical_findings": False,
+            "follow_up": []
+        }
+        
+        # generate clinical impression based on findings
+        interpretation["clinical_impression"] = self._generate_imaging_impression(study_name, findings, patient_state)
+        interpretation["recommendations"] = self._generate_imaging_recommendations(study_name, findings, patient_state)
+        interpretation["follow_up"] = self._generate_imaging_follow_up(study_name, findings, patient_state)
+        
+        # check for critical findings
+        interpretation["critical_findings"] = self._check_critical_imaging_findings(study_name, findings)
+        
+        return interpretation
+    
+    def _generate_imaging_impression(self, study_name: str, findings: Dict[str, Any], patient_state: PatientState) -> str:
+        """generate clinical impression for imaging study"""
+        if study_name == "chest_xray":
+            if findings.get("pneumonia", False):
+                return "Right lower lobe infiltrate consistent with pneumonia"
+            elif findings.get("pneumothorax", False):
+                return "Right pneumothorax with mediastinal shift"
+            elif findings.get("chf", False):
+                return "Pulmonary edema with cardiomegaly"
+            else:
+                return "Normal chest radiograph"
+        
+        elif study_name == "head_ct":
+            if findings.get("hemorrhage", False):
+                return "Intraparenchymal hemorrhage in right frontal lobe"
+            elif findings.get("mass", False):
+                return "Enhancing mass in left temporal lobe"
+            elif findings.get("edema", False):
+                return "Diffuse cerebral edema with effacement of sulci"
+            else:
+                return "Normal head CT"
+        
+        elif study_name == "chest_ct_pe":
+            if findings.get("pe", False):
+                return "Multiple pulmonary emboli in bilateral lower lobes"
+            else:
+                return "No evidence of pulmonary embolism"
+        
+        elif study_name == "ecg":
+            if findings.get("st_elevation", False):
+                return "ST elevation in leads II, III, aVF consistent with inferior STEMI"
+            elif findings.get("st_depression", False):
+                return "ST depression in anterior leads concerning for ischemia"
+            else:
+                return "Normal sinus rhythm"
+        
+        else:
+            return "Study completed - review with clinical correlation"
+    
+    def _generate_imaging_recommendations(self, study_name: str, findings: Dict[str, Any], patient_state: PatientState) -> List[str]:
+        """generate recommendations based on imaging findings"""
+        recommendations = []
+        
+        if study_name == "chest_xray":
+            if findings.get("pneumonia", False):
+                recommendations.extend([
+                    "Start antibiotics",
+                    "Follow-up chest X-ray in 48-72 hours",
+                    "Consider sputum culture"
+                ])
+            elif findings.get("pneumothorax", False):
+                recommendations.extend([
+                    "CRITICAL: Insert chest tube",
+                    "Monitor for tension pneumothorax",
+                    "Consider trauma evaluation"
+                ])
+        
+        elif study_name == "head_ct":
+            if findings.get("hemorrhage", False):
+                recommendations.extend([
+                    "CRITICAL: Neurosurgery consultation",
+                    "Monitor for increased ICP",
+                    "Consider repeat CT in 6 hours"
+                ])
+            elif findings.get("mass", False):
+                recommendations.extend([
+                    "CRITICAL: Neurosurgery consultation",
+                    "Consider MRI with contrast",
+                    "Monitor for neurologic changes"
+                ])
+        
+        elif study_name == "chest_ct_pe":
+            if findings.get("pe", False):
+                recommendations.extend([
+                    "CRITICAL: Anticoagulation therapy",
+                    "Consider thrombolysis if massive PE",
+                    "Monitor for hemodynamic instability"
+                ])
+        
+        elif study_name == "ecg":
+            if findings.get("st_elevation", False):
+                recommendations.extend([
+                    "CRITICAL: Activate cardiac catheterization",
+                    "Aspirin 325mg",
+                    "Heparin bolus and infusion"
+                ])
+        
+        return recommendations
+    
+    def _generate_imaging_follow_up(self, study_name: str, findings: Dict[str, Any], patient_state: PatientState) -> List[str]:
+        """generate follow-up recommendations for imaging"""
+        follow_up = []
+        
+        if study_name == "chest_xray":
+            if findings.get("pneumonia", False):
+                follow_up.append("Repeat chest X-ray in 48-72 hours")
+            elif findings.get("mass", False):
+                follow_up.extend([
+                    "CT chest with contrast",
+                    "Consider biopsy"
+                ])
+        
+        elif study_name == "head_ct":
+            if findings.get("mass", False):
+                follow_up.extend([
+                    "MRI brain with contrast",
+                    "Neurosurgery consultation"
+                ])
+        
+        elif study_name == "chest_ct_pe":
+            if findings.get("pe", False):
+                follow_up.extend([
+                    "Echocardiogram",
+                    "Lower extremity doppler",
+                    "Consider IVC filter"
+                ])
+        
+        return follow_up
+    
+    def _check_critical_imaging_findings(self, study_name: str, findings: Dict[str, Any]) -> bool:
+        """check if imaging findings are critical"""
+        critical_findings = [
+            "pneumothorax", "hemorrhage", "mass", "pe", "st_elevation",
+            "aortic_dissection", "bowel_perforation", "spinal_cord_injury"
+        ]
+        
+        for finding in critical_findings:
+            if findings.get(finding, False):
+                return True
+        
+        return False
+    
+    def get_critical_alerts(self, patient_state: PatientState) -> List[Dict[str, Any]]:
+        """get all critical lab and imaging alerts for patient"""
+        alerts = []
+        
+        # check lab results
+        for test_name, result in patient_state.lab_results.items():
+            if test_name in self.lab_tests:
+                test = self.lab_tests[test_name]
+                value = result.get("value", 0)
+                
+                if test.critical_low and value <= test.critical_low:
+                    alerts.append({
+                        "type": "lab",
+                        "test": test_name,
+                        "value": value,
+                        "severity": "critical_low",
+                        "message": f"CRITICAL: {test.name} = {value} {test.unit}"
+                    })
+                
+                elif test.critical_high and value >= test.critical_high:
+                    alerts.append({
+                        "type": "lab",
+                        "test": test_name,
+                        "value": value,
+                        "severity": "critical_high",
+                        "message": f"CRITICAL: {test.name} = {value} {test.unit}"
+                    })
+        
+        # check imaging results
+        for study_name, result in patient_state.imaging_results.items():
+            if study_name in self.imaging_studies:
+                findings = result.get("findings", {})
+                if self._check_critical_imaging_findings(study_name, findings):
+                    study = self.imaging_studies[study_name]
+                    alerts.append({
+                        "type": "imaging",
+                        "study": study_name,
+                        "severity": "critical",
+                        "message": f"CRITICAL: {study.name} shows critical findings"
+                    })
+        
+        return alerts 
