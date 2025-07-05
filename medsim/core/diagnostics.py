@@ -109,6 +109,88 @@ class AdvancedDiagnosticSystem:
             clinical_significance="Decreased in thrombocytopenia; increased in reactive thrombocytosis"
         )
         
+        tests["mcv"] = LabTest(
+            name="Mean Corpuscular Volume",
+            category="CBC",
+            normal_range=(80, 100),
+            unit="fL",
+            description="Average size of red blood cells",
+            clinical_significance="Increased in macrocytic anemia; decreased in microcytic anemia"
+        )
+        
+        tests["mch"] = LabTest(
+            name="Mean Corpuscular Hemoglobin",
+            category="CBC",
+            normal_range=(27, 33),
+            unit="pg",
+            description="Average hemoglobin content per red cell",
+            clinical_significance="Decreased in iron deficiency anemia"
+        )
+        
+        tests["mchc"] = LabTest(
+            name="Mean Corpuscular Hemoglobin Concentration",
+            category="CBC",
+            normal_range=(32, 36),
+            unit="%",
+            description="Average hemoglobin concentration per red cell",
+            clinical_significance="Decreased in iron deficiency anemia"
+        )
+        
+        tests["rdw"] = LabTest(
+            name="Red Cell Distribution Width",
+            category="CBC",
+            normal_range=(11.5, 14.5),
+            unit="%",
+            description="Variation in red cell size",
+            clinical_significance="Increased in iron deficiency anemia, mixed anemias"
+        )
+        
+        # Differential white blood cell count
+        tests["neutrophils"] = LabTest(
+            name="Neutrophils",
+            category="CBC",
+            normal_range=(40, 70),
+            unit="%",
+            description="Neutrophil percentage",
+            clinical_significance="Elevated in bacterial infection; decreased in viral infection"
+        )
+        
+        tests["lymphocytes"] = LabTest(
+            name="Lymphocytes",
+            category="CBC",
+            normal_range=(20, 40),
+            unit="%",
+            description="Lymphocyte percentage",
+            clinical_significance="Elevated in viral infection; decreased in bacterial infection"
+        )
+        
+        tests["monocytes"] = LabTest(
+            name="Monocytes",
+            category="CBC",
+            normal_range=(2, 8),
+            unit="%",
+            description="Monocyte percentage",
+            clinical_significance="Elevated in chronic inflammation, certain infections"
+        )
+        
+        tests["eosinophils"] = LabTest(
+            name="Eosinophils",
+            category="CBC",
+            normal_range=(1, 4),
+            unit="%",
+            description="Eosinophil percentage",
+            clinical_significance="Elevated in allergies, parasitic infections"
+        )
+        
+        tests["basophils"] = LabTest(
+            name="Basophils",
+            category="CBC",
+            normal_range=(0, 2),
+            unit="%",
+            description="Basophil percentage",
+            clinical_significance="Elevated in allergic reactions, chronic inflammation"
+        )
+        
         # Basic metabolic panel (bmp)
         tests["sodium"] = LabTest(
             name="Sodium",
@@ -182,6 +264,111 @@ class AdvancedDiagnosticSystem:
             clinical_significance="Elevated in diabetes; decreased in hypoglycemia"
         )
         
+        # Comprehensive metabolic panel (cmp)
+        tests["calcium"] = LabTest(
+            name="Calcium",
+            category="CMP",
+            normal_range=(8.5, 10.5),
+            unit="mg/dL",
+            critical_low=6.5,
+            critical_high=12.0,
+            description="Measures total serum calcium",
+            clinical_significance="Elevated in hyperparathyroidism; decreased in hypoparathyroidism"
+        )
+        
+        tests["phosphorus"] = LabTest(
+            name="Phosphorus",
+            category="CMP",
+            normal_range=(2.5, 4.5),
+            unit="mg/dL",
+            description="Measures serum phosphorus",
+            clinical_significance="Elevated in renal failure; decreased in hyperparathyroidism"
+        )
+        
+        tests["magnesium"] = LabTest(
+            name="Magnesium",
+            category="CMP",
+            normal_range=(1.5, 2.5),
+            unit="mg/dL",
+            description="Measures serum magnesium",
+            clinical_significance="Decreased in alcoholism, malnutrition; increased in renal failure"
+        )
+        
+        tests["albumin"] = LabTest(
+            name="Albumin",
+            category="CMP",
+            normal_range=(3.5, 5.0),
+            unit="g/dL",
+            description="Measures serum albumin",
+            clinical_significance="Decreased in liver disease, malnutrition, inflammation"
+        )
+        
+        tests["total_protein"] = LabTest(
+            name="Total Protein",
+            category="CMP",
+            normal_range=(6.0, 8.0),
+            unit="g/dL",
+            description="Measures total serum protein",
+            clinical_significance="Decreased in liver disease, malnutrition; increased in multiple myeloma"
+        )
+        
+        tests["bilirubin_total"] = LabTest(
+            name="Total Bilirubin",
+            category="CMP",
+            normal_range=(0.3, 1.2),
+            unit="mg/dL",
+            critical_high=5.0,
+            description="Measures total bilirubin",
+            clinical_significance="Elevated in liver disease, hemolysis, biliary obstruction"
+        )
+        
+        tests["bilirubin_direct"] = LabTest(
+            name="Direct Bilirubin",
+            category="CMP",
+            normal_range=(0.0, 0.3),
+            unit="mg/dL",
+            description="Measures conjugated bilirubin",
+            clinical_significance="Elevated in biliary obstruction, liver disease"
+        )
+        
+        tests["alt"] = LabTest(
+            name="Alanine Aminotransferase",
+            category="CMP",
+            normal_range=(7, 55),
+            unit="U/L",
+            critical_high=500,
+            description="Liver enzyme",
+            clinical_significance="Elevated in liver disease, hepatitis"
+        )
+        
+        tests["ast"] = LabTest(
+            name="Aspartate Aminotransferase",
+            category="CMP",
+            normal_range=(8, 48),
+            unit="U/L",
+            critical_high=500,
+            description="Liver enzyme",
+            clinical_significance="Elevated in liver disease, muscle injury"
+        )
+        
+        tests["alkaline_phosphatase"] = LabTest(
+            name="Alkaline Phosphatase",
+            category="CMP",
+            normal_range=(44, 147),
+            unit="U/L",
+            description="Liver and bone enzyme",
+            clinical_significance="Elevated in biliary obstruction, bone disease"
+        )
+        
+        tests["ggt"] = LabTest(
+            name="Gamma-Glutamyl Transferase",
+            category="CMP",
+            normal_range=(9, 48),
+            unit="U/L",
+            description="Liver enzyme",
+            clinical_significance="Elevated in biliary obstruction, alcohol use"
+        )
+        
         # Cardiac enzymes
         tests["troponin"] = LabTest(
             name="Troponin I",
@@ -210,8 +397,539 @@ class AdvancedDiagnosticSystem:
             normal_range=(0, 100),
             unit="pg/mL",
             critical_high=500,
-            description="Marker for heart failure",
+            description="Heart failure marker",
             clinical_significance="Elevated in heart failure, volume overload"
+        )
+        
+        tests["ck_total"] = LabTest(
+            name="Creatine Kinase Total",
+            category="Cardiac",
+            normal_range=(30, 200),
+            unit="U/L",
+            critical_high=1000,
+            description="Total creatine kinase",
+            clinical_significance="Elevated in muscle injury, myocardial infarction"
+        )
+        
+        tests["ldh"] = LabTest(
+            name="Lactate Dehydrogenase",
+            category="Cardiac",
+            normal_range=(140, 280),
+            unit="U/L",
+            description="Tissue injury marker",
+            clinical_significance="Elevated in tissue injury, hemolysis, malignancy"
+        )
+        
+        # Thyroid function tests
+        tests["tsh"] = LabTest(
+            name="Thyroid Stimulating Hormone",
+            category="Thyroid",
+            normal_range=(0.4, 4.0),
+            unit="μIU/mL",
+            description="Thyroid function screening",
+            clinical_significance="Elevated in hypothyroidism; decreased in hyperthyroidism"
+        )
+        
+        tests["t4_total"] = LabTest(
+            name="Total T4",
+            category="Thyroid",
+            normal_range=(5.0, 12.0),
+            unit="μg/dL",
+            description="Total thyroxine",
+            clinical_significance="Elevated in hyperthyroidism; decreased in hypothyroidism"
+        )
+        
+        tests["t4_free"] = LabTest(
+            name="Free T4",
+            category="Thyroid",
+            normal_range=(0.8, 1.8),
+            unit="ng/dL",
+            description="Free thyroxine",
+            clinical_significance="Elevated in hyperthyroidism; decreased in hypothyroidism"
+        )
+        
+        tests["t3_total"] = LabTest(
+            name="Total T3",
+            category="Thyroid",
+            normal_range=(80, 200),
+            unit="ng/dL",
+            description="Total triiodothyronine",
+            clinical_significance="Elevated in hyperthyroidism; decreased in hypothyroidism"
+        )
+        
+        tests["t3_free"] = LabTest(
+            name="Free T3",
+            category="Thyroid",
+            normal_range=(2.3, 4.2),
+            unit="pg/mL",
+            description="Free triiodothyronine",
+            clinical_significance="Elevated in hyperthyroidism; decreased in hypothyroidism"
+        )
+        
+        # Lipid panel
+        tests["cholesterol_total"] = LabTest(
+            name="Total Cholesterol",
+            category="Lipid",
+            normal_range=(0, 200),
+            unit="mg/dL",
+            description="Total cholesterol",
+            clinical_significance="Elevated in hyperlipidemia, cardiovascular risk"
+        )
+        
+        tests["hdl"] = LabTest(
+            name="HDL Cholesterol",
+            category="Lipid",
+            normal_range=(40, 60),
+            unit="mg/dL",
+            description="High-density lipoprotein",
+            clinical_significance="Decreased in cardiovascular risk; increased is protective"
+        )
+        
+        tests["ldl"] = LabTest(
+            name="LDL Cholesterol",
+            category="Lipid",
+            normal_range=(0, 100),
+            unit="mg/dL",
+            description="Low-density lipoprotein",
+            clinical_significance="Elevated in cardiovascular risk"
+        )
+        
+        tests["triglycerides"] = LabTest(
+            name="Triglycerides",
+            category="Lipid",
+            normal_range=(0, 150),
+            unit="mg/dL",
+            description="Triglycerides",
+            clinical_significance="Elevated in metabolic syndrome, cardiovascular risk"
+        )
+        
+        # Coagulation studies
+        tests["pt"] = LabTest(
+            name="Prothrombin Time",
+            category="Coagulation",
+            normal_range=(11, 13),
+            unit="seconds",
+            critical_high=20,
+            description="Measures extrinsic coagulation pathway",
+            clinical_significance="Prolonged in warfarin therapy, liver disease"
+        )
+        
+        tests["inr"] = LabTest(
+            name="International Normalized Ratio",
+            category="Coagulation",
+            normal_range=(0.9, 1.1),
+            unit="ratio",
+            critical_high=5.0,
+            description="Standardized prothrombin time",
+            clinical_significance="Elevated in warfarin therapy, bleeding risk"
+        )
+        
+        tests["aptt"] = LabTest(
+            name="Activated Partial Thromboplastin Time",
+            category="Coagulation",
+            normal_range=(25, 35),
+            unit="seconds",
+            critical_high=60,
+            description="Measures intrinsic coagulation pathway",
+            clinical_significance="Prolonged in heparin therapy, hemophilia"
+        )
+        
+        tests["fibrinogen"] = LabTest(
+            name="Fibrinogen",
+            category="Coagulation",
+            normal_range=(200, 400),
+            unit="mg/dL",
+            description="Fibrinogen level",
+            clinical_significance="Decreased in DIC, liver disease; increased in inflammation"
+        )
+        
+        tests["d_dimer"] = LabTest(
+            name="D-Dimer",
+            category="Coagulation",
+            normal_range=(0, 0.5),
+            unit="μg/mL",
+            description="Fibrin degradation product",
+            clinical_significance="Elevated in DVT, PE, DIC"
+        )
+        
+        # Inflammatory markers
+        tests["crp"] = LabTest(
+            name="C-Reactive Protein",
+            category="Inflammatory",
+            normal_range=(0, 3),
+            unit="mg/L",
+            description="Acute phase reactant",
+            clinical_significance="Elevated in inflammation, infection, cardiovascular risk"
+        )
+        
+        tests["esr"] = LabTest(
+            name="Erythrocyte Sedimentation Rate",
+            category="Inflammatory",
+            normal_range=(0, 20),
+            unit="mm/hr",
+            description="Inflammatory marker",
+            clinical_significance="Elevated in inflammation, infection, autoimmune disease"
+        )
+        
+        tests["ferritin"] = LabTest(
+            name="Ferritin",
+            category="Iron",
+            normal_range=(20, 250),
+            unit="ng/mL",
+            description="Iron storage protein",
+            clinical_significance="Elevated in inflammation, iron overload; decreased in iron deficiency"
+        )
+        
+        tests["iron"] = LabTest(
+            name="Iron",
+            category="Iron",
+            normal_range=(60, 170),
+            unit="μg/dL",
+            description="Serum iron",
+            clinical_significance="Decreased in iron deficiency; increased in hemochromatosis"
+        )
+        
+        tests["tibc"] = LabTest(
+            name="Total Iron Binding Capacity",
+            category="Iron",
+            normal_range=(240, 450),
+            unit="μg/dL",
+            description="Iron binding capacity",
+            clinical_significance="Elevated in iron deficiency; decreased in inflammation"
+        )
+        
+        tests["transferrin_saturation"] = LabTest(
+            name="Transferrin Saturation",
+            category="Iron",
+            normal_range=(20, 50),
+            unit="%",
+            description="Iron saturation",
+            clinical_significance="Decreased in iron deficiency; increased in hemochromatosis"
+        )
+        
+        # Vitamin D
+        tests["vitamin_d_25_oh"] = LabTest(
+            name="Vitamin D 25-OH",
+            category="Vitamin",
+            normal_range=(30, 100),
+            unit="ng/mL",
+            description="Vitamin D status",
+            clinical_significance="Decreased in vitamin D deficiency"
+        )
+        
+        # B12 and folate
+        tests["vitamin_b12"] = LabTest(
+            name="Vitamin B12",
+            category="Vitamin",
+            normal_range=(200, 900),
+            unit="pg/mL",
+            description="Vitamin B12 level",
+            clinical_significance="Decreased in B12 deficiency, pernicious anemia"
+        )
+        
+        tests["folate"] = LabTest(
+            name="Folate",
+            category="Vitamin",
+            normal_range=(2, 20),
+            unit="ng/mL",
+            description="Folate level",
+            clinical_significance="Decreased in folate deficiency, macrocytic anemia"
+        )
+        
+        # Microbiology tests
+        tests["blood_culture"] = LabTest(
+            name="Blood Culture",
+            category="Microbiology",
+            normal_range=(0, 0),
+            unit="CFU/mL",
+            turnaround_time=1440,  # 24 hours
+            cost=150.0,
+            description="Blood culture for bacteria and fungi",
+            clinical_significance="Positive in bacteremia, fungemia, sepsis"
+        )
+        
+        tests["urine_culture"] = LabTest(
+            name="Urine Culture",
+            category="Microbiology",
+            normal_range=(0, 10000),
+            unit="CFU/mL",
+            turnaround_time=1440,
+            cost=120.0,
+            description="Urine culture for bacteria",
+            clinical_significance="Elevated in urinary tract infection"
+        )
+        
+        tests["sputum_culture"] = LabTest(
+            name="Sputum Culture",
+            category="Microbiology",
+            normal_range=(0, 0),
+            unit="CFU/mL",
+            turnaround_time=1440,
+            cost=130.0,
+            description="Sputum culture for bacteria",
+            clinical_significance="Positive in pneumonia, respiratory infection"
+        )
+        
+        tests["stool_culture"] = LabTest(
+            name="Stool Culture",
+            category="Microbiology",
+            normal_range=(0, 0),
+            unit="CFU/mL",
+            turnaround_time=1440,
+            cost=140.0,
+            description="Stool culture for enteric pathogens",
+            clinical_significance="Positive in gastroenteritis, food poisoning"
+        )
+        
+        tests["wound_culture"] = LabTest(
+            name="Wound Culture",
+            category="Microbiology",
+            normal_range=(0, 0),
+            unit="CFU/mL",
+            turnaround_time=1440,
+            cost=125.0,
+            description="Wound culture for bacteria",
+            clinical_significance="Positive in wound infection, cellulitis"
+        )
+        
+        # Rapid tests
+        tests["rapid_strep"] = LabTest(
+            name="Rapid Strep Test",
+            category="Rapid",
+            normal_range=(0, 0),
+            unit="positive/negative",
+            turnaround_time=15,
+            cost=25.0,
+            description="Rapid group A streptococcus test",
+            clinical_significance="Positive in streptococcal pharyngitis"
+        )
+        
+        tests["rapid_flu"] = LabTest(
+            name="Rapid Influenza Test",
+            category="Rapid",
+            normal_range=(0, 0),
+            unit="positive/negative",
+            turnaround_time=20,
+            cost=30.0,
+            description="Rapid influenza A/B test",
+            clinical_significance="Positive in influenza infection"
+        )
+        
+        tests["rapid_covid"] = LabTest(
+            name="Rapid COVID-19 Test",
+            category="Rapid",
+            normal_range=(0, 0),
+            unit="positive/negative",
+            turnaround_time=15,
+            cost=35.0,
+            description="Rapid SARS-CoV-2 antigen test",
+            clinical_significance="Positive in COVID-19 infection"
+        )
+        
+        tests["pregnancy_test"] = LabTest(
+            name="Pregnancy Test",
+            category="Rapid",
+            normal_range=(0, 0),
+            unit="positive/negative",
+            turnaround_time=10,
+            cost=20.0,
+            description="Urine pregnancy test",
+            clinical_significance="Positive in pregnancy"
+        )
+        
+        # Specialized tests
+        tests["psa"] = LabTest(
+            name="Prostate Specific Antigen",
+            category="Oncology",
+            normal_range=(0, 4),
+            unit="ng/mL",
+            description="Prostate cancer screening",
+            clinical_significance="Elevated in prostate cancer, BPH, prostatitis"
+        )
+        
+        tests["ca_125"] = LabTest(
+            name="CA-125",
+            category="Oncology",
+            normal_range=(0, 35),
+            unit="U/mL",
+            description="Ovarian cancer marker",
+            clinical_significance="Elevated in ovarian cancer, endometriosis"
+        )
+        
+        tests["ca_19_9"] = LabTest(
+            name="CA 19-9",
+            category="Oncology",
+            normal_range=(0, 37),
+            unit="U/mL",
+            description="Pancreatic cancer marker",
+            clinical_significance="Elevated in pancreatic cancer, cholangiocarcinoma"
+        )
+        
+        tests["cea"] = LabTest(
+            name="Carcinoembryonic Antigen",
+            category="Oncology",
+            normal_range=(0, 3),
+            unit="ng/mL",
+            description="Colorectal cancer marker",
+            clinical_significance="Elevated in colorectal cancer, other malignancies"
+        )
+        
+        tests["afp"] = LabTest(
+            name="Alpha-Fetoprotein",
+            category="Oncology",
+            normal_range=(0, 10),
+            unit="ng/mL",
+            description="Liver cancer marker",
+            clinical_significance="Elevated in hepatocellular carcinoma, germ cell tumors"
+        )
+        
+        tests["hcg"] = LabTest(
+            name="Beta-HCG",
+            category="Oncology",
+            normal_range=(0, 5),
+            unit="mIU/mL",
+            description="Pregnancy and germ cell tumor marker",
+            clinical_significance="Elevated in pregnancy, germ cell tumors, choriocarcinoma"
+        )
+        
+        # Drug levels
+        tests["digoxin"] = LabTest(
+            name="Digoxin Level",
+            category="Drug Level",
+            normal_range=(0.8, 2.0),
+            unit="ng/mL",
+            critical_low=0.5,
+            critical_high=2.5,
+            description="Digoxin therapeutic drug monitoring",
+            clinical_significance="Elevated in digoxin toxicity; decreased in subtherapeutic levels"
+        )
+        
+        tests["lithium"] = LabTest(
+            name="Lithium Level",
+            category="Drug Level",
+            normal_range=(0.6, 1.2),
+            unit="mEq/L",
+            critical_low=0.4,
+            critical_high=1.5,
+            description="Lithium therapeutic drug monitoring",
+            clinical_significance="Elevated in lithium toxicity; decreased in subtherapeutic levels"
+        )
+        
+        tests["phenytoin"] = LabTest(
+            name="Phenytoin Level",
+            category="Drug Level",
+            normal_range=(10, 20),
+            unit="μg/mL",
+            critical_low=5,
+            critical_high=25,
+            description="Phenytoin therapeutic drug monitoring",
+            clinical_significance="Elevated in phenytoin toxicity; decreased in subtherapeutic levels"
+        )
+        
+        tests["carbamazepine"] = LabTest(
+            name="Carbamazepine Level",
+            category="Drug Level",
+            normal_range=(4, 12),
+            unit="μg/mL",
+            critical_low=2,
+            critical_high=15,
+            description="Carbamazepine therapeutic drug monitoring",
+            clinical_significance="Elevated in carbamazepine toxicity; decreased in subtherapeutic levels"
+        )
+        
+        tests["vancomycin"] = LabTest(
+            name="Vancomycin Trough",
+            category="Drug Level",
+            normal_range=(10, 20),
+            unit="μg/mL",
+            critical_low=5,
+            critical_high=25,
+            description="Vancomycin therapeutic drug monitoring",
+            clinical_significance="Elevated in vancomycin toxicity; decreased in subtherapeutic levels"
+        )
+        
+        tests["gentamicin"] = LabTest(
+            name="Gentamicin Peak",
+            category="Drug Level",
+            normal_range=(5, 10),
+            unit="μg/mL",
+            critical_low=2,
+            critical_high=12,
+            description="Gentamicin peak level",
+            clinical_significance="Elevated in gentamicin toxicity; decreased in subtherapeutic levels"
+        )
+        
+        tests["gentamicin_trough"] = LabTest(
+            name="Gentamicin Trough",
+            category="Drug Level",
+            normal_range=(0.5, 2.0),
+            unit="μg/mL",
+            critical_high=3,
+            description="Gentamicin trough level",
+            clinical_significance="Elevated in gentamicin toxicity"
+        )
+        
+        # Arterial blood gas
+        tests["ph"] = LabTest(
+            name="pH",
+            category="ABG",
+            normal_range=(7.35, 7.45),
+            unit="",
+            critical_low=7.2,
+            critical_high=7.6,
+            description="Blood pH",
+            clinical_significance="Decreased in acidosis; increased in alkalosis"
+        )
+        
+        tests["pco2"] = LabTest(
+            name="PCO2",
+            category="ABG",
+            normal_range=(35, 45),
+            unit="mmHg",
+            critical_low=20,
+            critical_high=60,
+            description="Partial pressure of CO2",
+            clinical_significance="Elevated in respiratory acidosis; decreased in respiratory alkalosis"
+        )
+        
+        tests["po2"] = LabTest(
+            name="PO2",
+            category="ABG",
+            normal_range=(80, 100),
+            unit="mmHg",
+            critical_low=60,
+            description="Partial pressure of O2",
+            clinical_significance="Decreased in hypoxemia, respiratory failure"
+        )
+        
+        tests["hco3"] = LabTest(
+            name="HCO3",
+            category="ABG",
+            normal_range=(22, 28),
+            unit="mEq/L",
+            critical_low=15,
+            critical_high=35,
+            description="Bicarbonate",
+            clinical_significance="Decreased in metabolic acidosis; increased in metabolic alkalosis"
+        )
+        
+        tests["base_excess"] = LabTest(
+            name="Base Excess",
+            category="ABG",
+            normal_range=(-2, 2),
+            unit="mEq/L",
+            description="Base excess/deficit",
+            clinical_significance="Negative in metabolic acidosis; positive in metabolic alkalosis"
+        )
+        
+        tests["o2_sat"] = LabTest(
+            name="O2 Saturation",
+            category="ABG",
+            normal_range=(95, 100),
+            unit="%",
+            critical_low=90,
+            description="Oxygen saturation",
+            clinical_significance="Decreased in hypoxemia, respiratory failure"
         )
         
         # Coagulation studies
@@ -702,10 +1420,270 @@ class AdvancedDiagnosticSystem:
             modality="Fluoroscopy",
             body_part="Vessels",
             turnaround_time=120,
-            cost=3000.0,
+            cost=2500.0,
             description="Diagnostic angiography",
             findings_template="Vessel patency: {patency}. Stenosis: {stenosis_findings}. Collaterals: {collateral_findings}. Flow: {flow_findings}.",
-            contraindications=["pregnancy", "contrast allergy", "renal insufficiency", "bleeding disorder"]
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
+        )
+        
+        studies["coronary_angiogram"] = ImagingStudy(
+            name="Coronary Angiogram",
+            modality="Fluoroscopy",
+            body_part="Heart",
+            turnaround_time=180,
+            cost=3000.0,
+            description="Coronary angiography",
+            findings_template="LAD: {lad_findings}. LCX: {lcx_findings}. RCA: {rca_findings}. Ejection fraction: {ef}%. Collaterals: {collateral_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency", "acute bleeding"]
+        )
+        
+        studies["cardiac_catheterization"] = ImagingStudy(
+            name="Cardiac Catheterization",
+            modality="Fluoroscopy",
+            body_part="Heart",
+            turnaround_time=240,
+            cost=3500.0,
+            description="Right and left heart catheterization",
+            findings_template="Pressures: {pressure_findings}. Cardiac output: {co} L/min. Ejection fraction: {ef}%. Valves: {valve_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency", "acute bleeding"]
+        )
+        
+        # Musculoskeletal imaging
+        studies["knee_mri"] = ImagingStudy(
+            name="Knee MRI",
+            modality="MRI",
+            body_part="Knee",
+            turnaround_time=60,
+            cost=800.0,
+            description="Magnetic resonance imaging of knee",
+            findings_template="ACL: {acl_findings}. PCL: {pcl_findings}. Menisci: {meniscus_findings}. Cartilage: {cartilage_findings}. Bone: {bone_findings}.",
+            contraindications=["metallic implants", "claustrophobia", "pregnancy"]
+        )
+        
+        studies["shoulder_mri"] = ImagingStudy(
+            name="Shoulder MRI",
+            modality="MRI",
+            body_part="Shoulder",
+            turnaround_time=60,
+            cost=800.0,
+            description="Magnetic resonance imaging of shoulder",
+            findings_template="Rotator cuff: {rotator_cuff_findings}. Labrum: {labrum_findings}. Biceps: {biceps_findings}. Bone: {bone_findings}.",
+            contraindications=["metallic implants", "claustrophobia", "pregnancy"]
+        )
+        
+        studies["spine_mri"] = ImagingStudy(
+            name="Spine MRI",
+            modality="MRI",
+            body_part="Spine",
+            turnaround_time=90,
+            cost=1200.0,
+            description="Magnetic resonance imaging of spine",
+            findings_template="Alignment: {alignment}. Discs: {disc_findings}. Spinal canal: {canal_findings}. Nerve roots: {nerve_findings}.",
+            contraindications=["metallic implants", "claustrophobia", "pregnancy"]
+        )
+        
+        studies["bone_scan"] = ImagingStudy(
+            name="Bone Scan",
+            modality="Nuclear Medicine",
+            body_part="Skeleton",
+            turnaround_time=180,
+            cost=600.0,
+            description="Nuclear medicine bone scan",
+            findings_template="Uptake pattern: {uptake_findings}. Lesions: {lesion_findings}. Distribution: {distribution_findings}.",
+            contraindications=["pregnancy", "breastfeeding"]
+        )
+        
+        # Pulmonary imaging
+        studies["ventilation_perfusion_scan"] = ImagingStudy(
+            name="V/Q Scan",
+            modality="Nuclear Medicine",
+            body_part="Lungs",
+            turnaround_time=120,
+            cost=800.0,
+            description="Ventilation/perfusion scan",
+            findings_template="Ventilation: {ventilation_findings}. Perfusion: {perfusion_findings}. Mismatch: {mismatch_findings}.",
+            contraindications=["pregnancy", "breastfeeding"]
+        )
+        
+        studies["pulmonary_function_test"] = ImagingStudy(
+            name="Pulmonary Function Test",
+            modality="PFT",
+            body_part="Lungs",
+            turnaround_time=60,
+            cost=300.0,
+            description="Pulmonary function testing",
+            findings_template="FVC: {fvc} L. FEV1: {fev1} L. FEV1/FVC: {ratio}%. DLCO: {dlco} mL/min/mmHg.",
+            contraindications=["acute respiratory distress", "unstable angina"]
+        )
+        
+        # Gastrointestinal imaging
+        studies["upper_gi_series"] = ImagingStudy(
+            name="Upper GI Series",
+            modality="Fluoroscopy",
+            body_part="Esophagus/Stomach",
+            turnaround_time=90,
+            cost=400.0,
+            description="Barium swallow and upper GI",
+            findings_template="Esophagus: {esophagus_findings}. Stomach: {stomach_findings}. Duodenum: {duodenum_findings}. Transit: {transit_findings}.",
+            contraindications=["pregnancy", "perforation", "obstruction"]
+        )
+        
+        studies["barium_enema"] = ImagingStudy(
+            name="Barium Enema",
+            modality="Fluoroscopy",
+            body_part="Colon",
+            turnaround_time=90,
+            cost=400.0,
+            description="Barium enema",
+            findings_template="Colon: {colon_findings}. Rectum: {rectum_findings}. Transit: {transit_findings}. Lesions: {lesion_findings}.",
+            contraindications=["pregnancy", "perforation", "obstruction"]
+        )
+        
+        studies["endoscopy"] = ImagingStudy(
+            name="Upper Endoscopy",
+            modality="Endoscopy",
+            body_part="Esophagus/Stomach/Duodenum",
+            turnaround_time=60,
+            cost=800.0,
+            description="Esophagogastroduodenoscopy",
+            findings_template="Esophagus: {esophagus_findings}. Stomach: {stomach_findings}. Duodenum: {duodenum_findings}. Biopsies: {biopsy_findings}.",
+            contraindications=["perforation", "unstable patient", "coagulopathy"]
+        )
+        
+        studies["colonoscopy"] = ImagingStudy(
+            name="Colonoscopy",
+            modality="Endoscopy",
+            body_part="Colon",
+            turnaround_time=90,
+            cost=1000.0,
+            description="Colonoscopy",
+            findings_template="Cecum: {cecum_findings}. Colon: {colon_findings}. Rectum: {rectum_findings}. Polyps: {polyp_findings}.",
+            contraindications=["perforation", "unstable patient", "coagulopathy"]
+        )
+        
+        # Obstetric imaging
+        studies["obstetric_ultrasound"] = ImagingStudy(
+            name="Obstetric Ultrasound",
+            modality="Ultrasound",
+            body_part="Uterus",
+            turnaround_time=45,
+            cost=400.0,
+            description="Pregnancy ultrasound",
+            findings_template="Gestational age: {ga} weeks. Fetal heart rate: {fhr} bpm. Amniotic fluid: {fluid_findings}. Placenta: {placenta_findings}.",
+            contraindications=[]
+        )
+        
+        studies["fetal_echo"] = ImagingStudy(
+            name="Fetal Echocardiogram",
+            modality="Ultrasound",
+            body_part="Fetal Heart",
+            turnaround_time=60,
+            cost=600.0,
+            description="Fetal echocardiogram",
+            findings_template="Cardiac chambers: {chamber_findings}. Valves: {valve_findings}. Rhythm: {rhythm_findings}. Flow: {flow_findings}.",
+            contraindications=[]
+        )
+        
+        # Breast imaging
+        studies["mammogram"] = ImagingStudy(
+            name="Mammogram",
+            modality="X-Ray",
+            body_part="Breast",
+            turnaround_time=30,
+            cost=200.0,
+            description="Screening mammogram",
+            findings_template="Density: {density}. Masses: {mass_findings}. Calcifications: {calcification_findings}. Asymmetry: {asymmetry_findings}.",
+            contraindications=["pregnancy"]
+        )
+        
+        studies["breast_ultrasound"] = ImagingStudy(
+            name="Breast Ultrasound",
+            modality="Ultrasound",
+            body_part="Breast",
+            turnaround_time=30,
+            cost=250.0,
+            description="Breast ultrasound",
+            findings_template="Masses: {mass_findings}. Cysts: {cyst_findings}. Lymph nodes: {lymph_node_findings}. Vascularity: {vascular_findings}.",
+            contraindications=[]
+        )
+        
+        studies["breast_mri"] = ImagingStudy(
+            name="Breast MRI",
+            modality="MRI",
+            body_part="Breast",
+            turnaround_time=90,
+            cost=1200.0,
+            description="Breast magnetic resonance imaging",
+            findings_template="Enhancement: {enhancement_findings}. Masses: {mass_findings}. Lymph nodes: {lymph_node_findings}. Background: {background_findings}.",
+            contraindications=["metallic implants", "claustrophobia", "pregnancy"]
+        )
+        
+        # Nuclear medicine
+        studies["pet_scan"] = ImagingStudy(
+            name="PET Scan",
+            modality="Nuclear Medicine",
+            body_part="Whole Body",
+            turnaround_time=180,
+            cost=2000.0,
+            description="Positron emission tomography",
+            findings_template="FDG uptake: {uptake_findings}. Lesions: {lesion_findings}. Distribution: {distribution_findings}. SUV: {suv_findings}.",
+            contraindications=["pregnancy", "breastfeeding", "uncontrolled diabetes"]
+        )
+        
+        studies["thyroid_scan"] = ImagingStudy(
+            name="Thyroid Scan",
+            modality="Nuclear Medicine",
+            body_part="Thyroid",
+            turnaround_time=120,
+            cost=400.0,
+            description="Thyroid nuclear medicine scan",
+            findings_template="Uptake: {uptake_findings}. Nodules: {nodule_findings}. Distribution: {distribution_findings}. Function: {function_findings}.",
+            contraindications=["pregnancy", "breastfeeding"]
+        )
+        
+        studies["parathyroid_scan"] = ImagingStudy(
+            name="Parathyroid Scan",
+            modality="Nuclear Medicine",
+            body_part="Neck",
+            turnaround_time=180,
+            cost=600.0,
+            description="Parathyroid nuclear medicine scan",
+            findings_template="Uptake: {uptake_findings}. Adenomas: {adenoma_findings}. Localization: {localization_findings}.",
+            contraindications=["pregnancy", "breastfeeding"]
+        )
+        
+        # Emergency imaging
+        studies["ct_angiogram_head"] = ImagingStudy(
+            name="CT Angiogram Head",
+            modality="CT",
+            body_part="Head",
+            turnaround_time=45,
+            cost=800.0,
+            description="CT angiography of head and neck",
+            findings_template="Vessels: {vessel_findings}. Brain: {brain_findings}. Neck: {neck_findings}. Aneurysms: {aneurysm_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
+        )
+        
+        studies["ct_angiogram_chest"] = ImagingStudy(
+            name="CT Angiogram Chest",
+            modality="CT",
+            body_part="Chest",
+            turnaround_time=45,
+            cost=1000.0,
+            description="CT angiography of chest",
+            findings_template="Aorta: {aorta_findings}. Pulmonary arteries: {pa_findings}. Heart: {heart_findings}. Vessels: {vessel_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
+        )
+        
+        studies["ct_angiogram_abdomen"] = ImagingStudy(
+            name="CT Angiogram Abdomen",
+            modality="CT",
+            body_part="Abdomen",
+            turnaround_time=45,
+            cost=1000.0,
+            description="CT angiography of abdomen",
+            findings_template="Aorta: {aorta_findings}. Mesenteric vessels: {mesenteric_findings}. Renal arteries: {renal_findings}. Vessels: {vessel_findings}.",
+            contraindications=["pregnancy", "contrast allergy", "renal insufficiency"]
         )
         
         studies["biopsy"] = ImagingStudy(

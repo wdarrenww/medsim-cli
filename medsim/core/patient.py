@@ -106,6 +106,9 @@ class EnhancedPatientProfile:
     medications: List[Dict[str, Any]] = field(default_factory=list)
     conditions: List[str] = field(default_factory=list)
     surgeries: List[Dict[str, Any]] = field(default_factory=list)
+    symptoms: List[str] = field(default_factory=list)
+    lab_results: Dict[str, Any] = field(default_factory=dict)
+    imaging_results: Dict[str, Any] = field(default_factory=dict)
     
     # enhanced components
     family_history: FamilyHistory = field(default_factory=FamilyHistory)
@@ -272,6 +275,18 @@ class EnhancedPatientProfile:
         
         return cls(**data)
 
+    @property
+    def vitals(self) -> dict:
+        # provide default vitals for simulation
+        return {
+            "blood_pressure_systolic": 120,
+            "blood_pressure_diastolic": 80,
+            "heart_rate": 80,
+            "respiratory_rate": 16,
+            "temperature": 98.6,
+            "oxygen_saturation": 98
+        }
+
 class PatientProfileGenerator:
     """generates realistic patient profiles"""
     
@@ -300,6 +315,7 @@ class PatientProfileGenerator:
             age = random.randint(18, 85)
         if gender is None:
             gender = random.choice(["male", "female"])
+        gender = gender.lower()  # normalize to lowercase
         
         # generate basic demographics
         name = random.choice(self.names[gender])
@@ -319,6 +335,7 @@ class PatientProfileGenerator:
             height = random.uniform(155, 175)  # cm
         
         weight = random.uniform(50, 120)  # kg
+        bmi = weight / ((height / 100) ** 2)
         
         # create patient profile
         patient = EnhancedPatientProfile(
@@ -329,7 +346,8 @@ class PatientProfileGenerator:
             race_ethnicity=race_ethnicity,
             date_of_birth=date_of_birth,
             height=height,
-            weight=weight
+            weight=weight,
+            bmi=bmi
         )
         
         # add social history

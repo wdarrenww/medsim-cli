@@ -16,6 +16,7 @@ def test_simulation_starts_and_monitors(sim):
 def test_administer_drug_adds_to_monitoring(sim):
     sim.start_simulation()
     sim.administer_drug('epinephrine', 1.0, 'IV')
+    sim.update_simulation()  # step simulation to process drug
     summary = sim.get_drug_monitoring_summary()
     # check that epinephrine is tracked
     assert 'epinephrine' in summary

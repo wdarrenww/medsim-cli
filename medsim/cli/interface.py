@@ -31,6 +31,16 @@ from ..core.drug_db import drug_db
 console = Console()
 app = typer.Typer()
 
+# global session for CLI state persistence
+_global_cli = None
+
+def get_cli_session():
+    """get or create global CLI session"""
+    global _global_cli
+    if _global_cli is None:
+        _global_cli = SimulatorCLI()
+    return _global_cli
+
 
 class SimulatorCLI:
     """main cli interface for the medical simulator"""
@@ -165,6 +175,13 @@ class SimulatorCLI:
         console.print("  trends     - Show trending data for parameters")
         console.print("  alerts_manage - Manage clinical alerts")
         console.print("  drugs_monitor - Show drug monitoring data")
+        
+        # comprehensive libraries
+        console.print("\n[bold yellow]Comprehensive Libraries:[/bold yellow]")
+        console.print("  symptoms_library [category] [search] - Access symptoms library")
+        console.print("  procedures_library [category] [search] - Access procedures library")
+        console.print("  labs_library [category] [search] - Access lab tests library")
+        console.print("  imaging_library [category] [search] - Access imaging studies library")
         
         # plugin management
         console.print("\n[bold yellow]Plugin Management:[/bold yellow]")
@@ -2373,13 +2390,260 @@ class SimulatorCLI:
             "creatinine": "mg/dL",
         }
         return units.get(parameter, "units")
+    
+    def symptoms_library(self, category: Optional[str] = None, search: Optional[str] = None):
+        """access comprehensive symptoms library"""
+        from ..core.symptoms import ComprehensiveSymptomLibrary, SymptomCategory
+        
+        library = ComprehensiveSymptomLibrary()
+        
+        if search:
+            symptoms = library.search_symptoms(search)
+            title = f"Symptoms matching '{search}'"
+        elif category:
+            try:
+                cat = SymptomCategory(category.lower())
+                symptoms = library.get_symptoms_by_category(cat)
+                title = f"Symptoms - {category.title()}"
+            except ValueError:
+                console.print(f"[red]Invalid category: {category}[/red]")
+                return
+        else:
+            symptoms = list(library.get_all_symptoms().values())
+            title = "All Symptoms"
+        
+        if not symptoms:
+            console.print("[yellow]No symptoms found[/yellow]")
+            return
+        
+        # symptoms table
+        table = Table(title=title)
+        table.add_column("Symptom", style="cyan")
+        table.add_column("Category", style="blue")
+        table.add_column("Severity", style="yellow")
+        table.add_column("Description", style="white")
+        table.add_column("Red Flags", style="red")
+        
+        for symptom in symptoms[:20]:  # limit to 20 for display
+            red_flags = ", ".join(symptom.red_flags[:2]) if symptom.red_flags else "None"
+            table.add_row(
+                symptom.name,
+                symptom.category.value.title(),
+                symptom.severity.value.title(),
+                symptom.description[:50] + "..." if len(symptom.description) > 50 else symptom.description,
+                red_flags
+            )
+        
+        console.print(table)
+        if len(symptoms) > 20:
+            console.print(f"[dim]Showing 20 of {len(symptoms)} symptoms[/dim]")
+    
+    def procedures_library(self, category: Optional[str] = None, search: Optional[str] = None):
+        """access comprehensive procedures library"""
+        from ..core.procedures import ComprehensiveProcedureLibrary, ProcedureCategory
+        
+        library = ComprehensiveProcedureLibrary()
+        
+        if search:
+            procedures = library.search_procedures(search)
+            title = f"Procedures matching '{search}'"
+        elif category:
+            try:
+                cat = ProcedureCategory(category.lower())
+                procedures = library.get_procedures_by_category(cat)
+                title = f"Procedures - {category.title()}"
+            except ValueError:
+                console.print(f"[red]Invalid category: {category}[/red]")
+                return
+        else:
+            procedures = list(library.get_all_procedures().values())
+            title = "All Procedures"
+        
+        if not procedures:
+            console.print("[yellow]No procedures found[/yellow]")
+            return
+        
+        # procedures table
+        table = Table(title=title)
+        table.add_column("Procedure", style="cyan")
+        table.add_column("Category", style="blue")
+        table.add_column("Complexity", style="yellow")
+        table.add_column("Duration", style="green")
+        table.add_column("Success Rate", style="blue")
+        table.add_column("Cost", style="dim")
+        
+        for procedure in procedures[:20]:  # limit to 20 for display
+            table.add_row(
+                procedure.name,
+                procedure.category.value.title(),
+                procedure.complexity.value.title(),
+                f"{procedure.duration_minutes} min",
+                f"{procedure.success_rate:.1%}",
+                f"${procedure.cost:,.0f}"
+            )
+        
+        console.print(table)
+        if len(procedures) > 20:
+            console.print(f"[dim]Showing 20 of {len(procedures)} procedures[/dim]")
+    
+    def labs_library(self, category: Optional[str] = None, search: Optional[str] = None):
+        """access comprehensive lab tests library"""
+        if not self.simulation:
+            console.print("[red]No simulation available[/red]")
+            return
+        
+        diagnostic_system = self.simulation.diagnostic_system
+        lab_tests = diagnostic_system.get_available_lab_tests()
+        
+        if search:
+            matching_tests = {k: v for k, v in lab_tests.items() if search.lower() in k.lower() or search.lower() in v.name.lower()}
+            title = f"Lab Tests matching '{search}'"
+            tests_to_show = matching_tests
+        elif category:
+            matching_tests = {k: v for k, v in lab_tests.items() if v.category.lower() == category.lower()}
+            title = f"Lab Tests - {category.title()}"
+            tests_to_show = matching_tests
+        else:
+            title = "All Lab Tests"
+            tests_to_show = lab_tests
+        
+        if not tests_to_show:
+            console.print("[yellow]No lab tests found[/yellow]")
+            return
+        
+        # lab tests table
+        table = Table(title=title)
+        table.add_column("Test", style="cyan")
+        table.add_column("Category", style="blue")
+        table.add_column("Normal Range", style="green")
+        table.add_column("Unit", style="yellow")
+        table.add_column("Turnaround", style="dim")
+        table.add_column("Cost", style="dim")
+        
+        for test_id, test in list(tests_to_show.items())[:20]:  # limit to 20 for display
+            normal_range = f"{test.normal_range[0]}-{test.normal_range[1]}"
+            table.add_row(
+                test.name,
+                test.category,
+                normal_range,
+                test.unit,
+                f"{test.turnaround_time} min",
+                f"${test.cost:.0f}"
+            )
+        
+        console.print(table)
+        if len(tests_to_show) > 20:
+            console.print(f"[dim]Showing 20 of {len(tests_to_show)} lab tests[/dim]")
+    
+    def imaging_library(self, category: Optional[str] = None, search: Optional[str] = None):
+        """access comprehensive imaging studies library"""
+        if not self.simulation:
+            console.print("[red]No simulation available[/red]")
+            return
+        
+        diagnostic_system = self.simulation.diagnostic_system
+        imaging_studies = diagnostic_system.get_available_imaging_studies()
+        
+        if search:
+            matching_studies = {k: v for k, v in imaging_studies.items() if search.lower() in k.lower() or search.lower() in v.name.lower()}
+            title = f"Imaging Studies matching '{search}'"
+            studies_to_show = matching_studies
+        elif category:
+            matching_studies = {k: v for k, v in imaging_studies.items() if v.modality.lower() == category.lower()}
+            title = f"Imaging Studies - {category.title()}"
+            studies_to_show = matching_studies
+        else:
+            title = "All Imaging Studies"
+            studies_to_show = imaging_studies
+        
+        if not studies_to_show:
+            console.print("[yellow]No imaging studies found[/yellow]")
+            return
+        
+        # imaging studies table
+        table = Table(title=title)
+        table.add_column("Study", style="cyan")
+        table.add_column("Modality", style="blue")
+        table.add_column("Body Part", style="green")
+        table.add_column("Duration", style="yellow")
+        table.add_column("Cost", style="dim")
+        table.add_column("Contraindications", style="red")
+        
+        for study_id, study in list(studies_to_show.items())[:20]:  # limit to 20 for display
+            contraindications = ", ".join(study.contraindications[:2]) if study.contraindications else "None"
+            table.add_row(
+                study.name,
+                study.modality,
+                study.body_part,
+                f"{study.turnaround_time} min",
+                f"${study.cost:.0f}",
+                contraindications
+            )
+        
+        console.print(table)
+        if len(studies_to_show) > 20:
+            console.print(f"[dim]Showing 20 of {len(studies_to_show)} imaging studies[/dim]")
 
 
 @app.command()
 def main():
     """medical simulator cli"""
-    cli = SimulatorCLI()
+    cli = get_cli_session()
     cli.run()
+
+@app.command()
+def start():
+    cli = get_cli_session()
+    cli.start_simulation()
+
+@app.command()
+def give_drug(name: str, dose: float, route: str = "IV"):
+    cli = get_cli_session()
+    cli.give_drug(name, dose, route)
+
+@app.command()
+def monitor(live: bool = False):
+    cli = get_cli_session()
+    cli.monitor(live=live)
+
+@app.command()
+def trends(parameter: Optional[str] = None, minutes: int = 60):
+    cli = get_cli_session()
+    cli.trends(parameter=parameter, minutes=minutes)
+
+@app.command()
+def alerts_manage(acknowledge: Optional[str] = None):
+    cli = get_cli_session()
+    cli.alerts_manage(acknowledge=acknowledge)
+
+@app.command()
+def drugs_monitor(drug_name: Optional[str] = None):
+    cli = get_cli_session()
+    cli.drugs_monitor(drug_name=drug_name)
+
+@app.command()
+def symptoms_library(category: Optional[str] = None, search: Optional[str] = None):
+    """access comprehensive symptoms library"""
+    cli = get_cli_session()
+    cli.symptoms_library(category=category, search=search)
+
+@app.command()
+def procedures_library(category: Optional[str] = None, search: Optional[str] = None):
+    """access comprehensive procedures library"""
+    cli = get_cli_session()
+    cli.procedures_library(category=category, search=search)
+
+@app.command()
+def labs_library(category: Optional[str] = None, search: Optional[str] = None):
+    """access comprehensive lab tests library"""
+    cli = get_cli_session()
+    cli.labs_library(category=category, search=search)
+
+@app.command()
+def imaging_library(category: Optional[str] = None, search: Optional[str] = None):
+    """access comprehensive imaging studies library"""
+    cli = get_cli_session()
+    cli.imaging_library(category=category, search=search)
 
 
 if __name__ == "__main__":

@@ -97,6 +97,9 @@ class MedicalSimulation:
             current_time=datetime.now()
         )
         
+        # new: track all patients
+        self.patients = {}
+        
         # initialize monitoring callbacks
         self.monitoring.add_alert_callback(self._on_alert)
         
@@ -111,6 +114,7 @@ class MedicalSimulation:
         
         # initialize patient state with enhanced data
         self.patient_state = PatientState(
+            patient_id=self.enhanced_patient.patient_id,
             name=self.enhanced_patient.name,
             age=self.enhanced_patient.age,
             gender=self.enhanced_patient.gender,
@@ -124,8 +128,7 @@ class MedicalSimulation:
             },
             symptoms=self.enhanced_patient.symptoms.copy(),
             medications=self.enhanced_patient.medications.copy(),
-            lab_results=self.enhanced_patient.lab_results.copy(),
-            imaging_results=self.enhanced_patient.imaging_results.copy()
+            lab_results=self.enhanced_patient.lab_results.copy()
         )
         
         # initialize physiological engine
@@ -171,8 +174,10 @@ class MedicalSimulation:
         
         self.env.process(update_physiology())
     
-    def get_patient(self) -> EnhancedPatientProfile:
+    def get_patient(self, patient_id: Optional[str] = None) -> EnhancedPatientProfile:
         """get the enhanced patient profile"""
+        if patient_id:
+            return self.patients.get(patient_id)
         return self.enhanced_patient
     
     def update_stress_level(self, new_stress: float):
@@ -352,7 +357,21 @@ class MedicalSimulation:
 
     def administer_drug(self, name: str, dose: float, route: str):
         """administer a drug to the patient"""
-        return self.pkpd_engine.administer_drug(name, dose, route, self.patient_weight)
+        admin = self.pkpd_engine.administer_drug(name, dose, route, self.patient_weight)
+        
+        # add to monitoring system
+        drug_level = DrugLevel(
+            drug_name=name,
+            concentration=admin.concentration,
+            therapeutic_min=0.1,  # default values - in real system would come from drug database
+            therapeutic_max=10.0,
+            toxic_threshold=20.0,
+            status="therapeutic"
+        )
+        self.current_state.active_drugs[name] = drug_level
+        self.drug_monitor.add_drug_level(name, drug_level)
+        
+        return admin
 
     def get_active_drugs(self):
         return self.pkpd_engine.get_active_drugs()
@@ -421,6 +440,9 @@ class MedicalSimulation:
         if not self.is_running:
             return
         
+        # update PKPD engine
+        self.update_pkpd(1.0)  # 1 minute time step
+        
         # update physiological systems
         self.physiological_engine.update_systems(
             stress_level=self.stress_level,
@@ -430,37 +452,54 @@ class MedicalSimulation:
         # update vital signs
         self._update_vital_signs()
         
-        # update drug levels (simplified - in real system would use PK/PD)
+        # update drug levels
         self._update_drug_levels()
     
     def _update_drug_levels(self):
         """update drug levels over time"""
         current_time = datetime.now()
         
-        for drug_name, level in self.current_state.active_drugs.items():
-            # simple decay model
-            time_diff = (current_time - level.timestamp).total_seconds() / 3600  # hours
+        # sync with PKPD engine active drugs
+        active_pkpd_drugs = self.pkpd_engine.get_active_drugs()
+        
+        for admin in active_pkpd_drugs:
+            drug_name = admin.drug.name.lower()
             
-            # exponential decay
-            half_life = 2.0  # hours
-            decay_factor = 2 ** (-time_diff / half_life)
+            # update concentration from PKPD engine
+            concentration = admin.update_concentration(self.pkpd_engine.current_time)
             
-            new_concentration = level.concentration * decay_factor
-            
-            # update level
-            level.concentration = new_concentration
-            level.timestamp = current_time
-            
-            # update status
-            if new_concentration < level.therapeutic_min * 0.5:
-                level.status = "subtherapeutic"
-            elif new_concentration > level.toxic_threshold:
-                level.status = "toxic"
+            # get or create drug level for monitoring
+            if drug_name not in self.current_state.active_drugs:
+                drug_level = DrugLevel(
+                    drug_name=drug_name,
+                    concentration=concentration,
+                    therapeutic_min=0.1,  # default values
+                    therapeutic_max=10.0,
+                    toxic_threshold=20.0,
+                    status="therapeutic"
+                )
+                self.current_state.active_drugs[drug_name] = drug_level
             else:
-                level.status = "therapeutic"
+                drug_level = self.current_state.active_drugs[drug_name]
+                drug_level.concentration = concentration
+                drug_level.timestamp = current_time
+            
+            # update status based on concentration
+            if concentration < drug_level.therapeutic_min * 0.5:
+                drug_level.status = "subtherapeutic"
+            elif concentration > drug_level.toxic_threshold:
+                drug_level.status = "toxic"
+            else:
+                drug_level.status = "therapeutic"
             
             # add to monitoring
-            self.drug_monitor.add_drug_level(drug_name, level)
+            self.drug_monitor.add_drug_level(drug_name, drug_level)
+        
+        # remove completed drugs from monitoring
+        completed_drugs = [name for name in self.current_state.active_drugs.keys() 
+                          if name not in [admin.drug.name.lower() for admin in active_pkpd_drugs]]
+        for drug_name in completed_drugs:
+            del self.current_state.active_drugs[drug_name]
     
     def set_patient_profile(self, profile: Dict[str, Any]):
         """set patient profile for simulation"""
@@ -493,4 +532,14 @@ class MedicalSimulation:
         if "diabetes" in profile.get("comorbidities", []):
             self.monitoring.alert_thresholds["glucose"]["high"] = 250
         if "hypertension" in profile.get("comorbidities", []):
-            self.monitoring.alert_thresholds["blood_pressure_systolic"]["high"] = 160 
+            self.monitoring.alert_thresholds["blood_pressure_systolic"]["high"] = 160
+
+    def add_patient(self, patient_id: str, name: str, age: int, gender: str) -> EnhancedPatientProfile:
+        # create and store a new patient
+        patient = self.patient_generator.generate_patient(age=age, gender=gender)
+        patient.patient_id = patient_id
+        patient.name = name
+        patient.age = age
+        patient.gender = gender
+        self.patients[patient_id] = patient
+        return patient 

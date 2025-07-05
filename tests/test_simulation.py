@@ -161,11 +161,10 @@ class TestMedicalSimulation:
         """test advancing simulation by time steps"""
         sim = MedicalSimulation()
         sim.start_simulation()
-        
+
         initial_time = sim.current_time
-        sim.step_simulation(1.0)
-        
-        assert sim.current_time > initial_time
+        sim.step_simulation()
+        assert sim.current_time == initial_time + 1
     
     def test_get_simulation_state(self):
         """test getting simulation state"""
