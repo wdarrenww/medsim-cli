@@ -1,511 +1,574 @@
 """
-advanced scripted dialogue system with context-aware responses and emotional states
+enhanced dialogue system with sophisticated patient communication and emotional modeling
 """
 
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
-from datetime import datetime
+from enum import Enum
+from datetime import datetime, timedelta
 import random
 import json
 
 
+class EmotionalState(Enum):
+    """enhanced emotional states"""
+    CALM = "calm"
+    ANXIOUS = "anxious"
+    FEARFUL = "fearful"
+    ANGRY = "angry"
+    DEPRESSED = "depressed"
+    CONFUSED = "confused"
+    AGITATED = "agitated"
+    HOPEFUL = "hopeful"
+    RELIEVED = "relieved"
+    PAIN = "pain"
+
+
+class CommunicationStyle(Enum):
+    """patient communication styles"""
+    DIRECT = "direct"
+    EVASIVE = "evasive"
+    DETAILED = "detailed"
+    VAGUE = "vague"
+    COOPERATIVE = "cooperative"
+    RESISTANT = "resistant"
+    EMOTIONAL = "emotional"
+    LOGICAL = "logical"
+
+
+class PainLevel(Enum):
+    """pain level descriptions"""
+    NONE = "no pain"
+    MILD = "mild discomfort"
+    MODERATE = "moderate pain"
+    SEVERE = "severe pain"
+    EXCRUCIATING = "excruciating pain"
+
+
 @dataclass
-class PatientEmotionalState:
-    """patient emotional state affecting dialogue responses"""
-    anxiety_level: float = 0.0  # 0-1 scale
-    pain_level: float = 0.0  # 0-1 scale
-    trust_level: float = 0.5  # 0-1 scale
-    cooperation_level: float = 0.7  # 0-1 scale
-    confusion_level: float = 0.0  # 0-1 scale
-    frustration_level: float = 0.0  # 0-1 scale
-    
-    def update_from_interaction(self, interaction_type: str, quality: float) -> None:
-        """update emotional state based on interaction quality"""
-        if interaction_type == "reassurance":
-            self.anxiety_level = max(0, self.anxiety_level - quality * 0.3)
-            self.trust_level = min(1.0, self.trust_level + quality * 0.2)
-        elif interaction_type == "explanation":
-            self.confusion_level = max(0, self.confusion_level - quality * 0.4)
-            self.trust_level = min(1.0, self.trust_level + quality * 0.15)
-        elif interaction_type == "pain_management":
-            self.pain_level = max(0, self.pain_level - quality * 0.5)
-            self.cooperation_level = min(1.0, self.cooperation_level + quality * 0.3)
-        elif interaction_type == "rushed_interaction":
-            self.frustration_level = min(1.0, self.frustration_level + 0.3)
-            self.trust_level = max(0, self.trust_level - 0.2)
-        elif interaction_type == "ignored_concerns":
-            self.frustration_level = min(1.0, self.frustration_level + 0.4)
-            self.cooperation_level = max(0, self.cooperation_level - 0.3)
+class PatientEmotion:
+    """enhanced patient emotional state"""
+    primary_emotion: EmotionalState
+    intensity: float  # 0.0 to 1.0
+    duration: timedelta
+    triggers: List[str] = field(default_factory=list)
+    coping_mechanisms: List[str] = field(default_factory=list)
+    affects_communication: bool = True
 
 
 @dataclass
 class DialogueContext:
-    """context for dialogue responses"""
-    question_type: str = ""
-    previous_questions: List[str] = field(default_factory=list)
-    patient_condition: Dict[str, Any] = field(default_factory=dict)
-    time_elapsed: float = 0.0
-    interventions_performed: List[str] = field(default_factory=list)
-    medications_given: List[str] = field(default_factory=list)
-    tests_ordered: List[str] = field(default_factory=list)
-    emotional_state: PatientEmotionalState = field(default_factory=PatientEmotionalState)
+    """enhanced dialogue context"""
+    patient_id: str
+    current_emotion: PatientEmotion
+    communication_style: CommunicationStyle
+    pain_level: PainLevel
+    trust_level: float  # 0.0 to 1.0
+    understanding_level: float  # 0.0 to 1.0
+    previous_topics: List[str] = field(default_factory=list)
+    sensitive_topics: List[str] = field(default_factory=list)
+    preferred_terms: Dict[str, str] = field(default_factory=dict)
+    cultural_background: str = ""
+    language_preference: str = "english"
 
 
-class AdvancedDialogueSystem:
-    """advanced dialogue system with context-aware responses"""
+@dataclass
+class DialogueResponse:
+    """enhanced dialogue response"""
+    text: str
+    emotion: EmotionalState
+    confidence: float  # 0.0 to 1.0
+    reveals_information: bool = False
+    requires_followup: bool = False
+    suggests_action: bool = False
+    emotional_impact: float = 0.0  # -1.0 to 1.0
+
+
+@dataclass
+class ConversationHistory:
+    """enhanced conversation history"""
+    timestamp: datetime
+    speaker: str  # "doctor" or "patient"
+    message: str
+    emotion: EmotionalState
+    context_notes: str = ""
+    followup_required: bool = False
+
+
+class EnhancedDialogueEngine:
+    """enhanced dialogue engine with sophisticated patient communication"""
     
     def __init__(self):
-        self.patient_profiles = self._load_patient_profiles()
-        self.response_templates = self._load_response_templates()
-        self.emotional_modifiers = self._load_emotional_modifiers()
-        self.context_history = []
-        self.conversation_flow = []
+        self.conversations: Dict[str, List[ConversationHistory]] = {}
+        self.patient_contexts: Dict[str, DialogueContext] = {}
+        self.emotional_responses = self._initialize_emotional_responses()
+        self.communication_patterns = self._initialize_communication_patterns()
+        self.pain_responses = self._initialize_pain_responses()
+    
+    def _initialize_emotional_responses(self) -> Dict[EmotionalState, List[str]]:
+        """initialize emotional response patterns"""
+        responses = {}
         
-    def _load_patient_profiles(self) -> Dict[str, Dict[str, Any]]:
-        """load patient personality profiles"""
-        return {
-            "cooperative": {
-                "baseline_trust": 0.8,
-                "baseline_cooperation": 0.9,
-                "response_style": "detailed",
-                "emotional_expression": "moderate",
-                "medical_knowledge": "basic"
-            },
-            "anxious": {
-                "baseline_trust": 0.4,
-                "baseline_cooperation": 0.6,
-                "response_style": "brief",
-                "emotional_expression": "high",
-                "medical_knowledge": "minimal"
-            },
-            "stoic": {
-                "baseline_trust": 0.7,
-                "baseline_cooperation": 0.8,
-                "response_style": "minimal",
-                "emotional_expression": "low",
-                "medical_knowledge": "moderate"
-            },
-            "elderly": {
-                "baseline_trust": 0.9,
-                "baseline_cooperation": 0.95,
-                "response_style": "detailed",
-                "emotional_expression": "moderate",
-                "medical_knowledge": "basic"
-            },
-            "pediatric": {
-                "baseline_trust": 0.6,
-                "baseline_cooperation": 0.7,
-                "response_style": "simple",
-                "emotional_expression": "high",
-                "medical_knowledge": "minimal"
-            }
-        }
+        responses[EmotionalState.CALM] = [
+            "I'm feeling okay today.",
+            "I'm doing alright, thank you for asking.",
+            "I feel pretty good right now.",
+            "I'm managing well."
+        ]
+        
+        responses[EmotionalState.ANXIOUS] = [
+            "I'm a bit worried about what's happening.",
+            "I feel nervous about the test results.",
+            "I'm anxious about the procedure.",
+            "I can't stop thinking about my symptoms."
+        ]
+        
+        responses[EmotionalState.FEARFUL] = [
+            "I'm scared about what this might be.",
+            "I'm afraid of what the tests will show.",
+            "I'm terrified about the surgery.",
+            "I'm really frightened about my condition."
+        ]
+        
+        responses[EmotionalState.ANGRY] = [
+            "I'm frustrated with how long this is taking.",
+            "I'm angry that no one seems to know what's wrong.",
+            "I'm mad about the side effects of the medication.",
+            "I'm upset about the cost of treatment."
+        ]
+        
+        responses[EmotionalState.DEPRESSED] = [
+            "I just don't feel like myself anymore.",
+            "I'm so tired of being sick.",
+            "I feel hopeless about getting better.",
+            "I don't see the point of continuing treatment."
+        ]
+        
+        responses[EmotionalState.CONFUSED] = [
+            "I don't really understand what's happening.",
+            "I'm confused about the treatment plan.",
+            "I'm not sure what the doctor is telling me.",
+            "I feel lost with all this medical jargon."
+        ]
+        
+        responses[EmotionalState.AGITATED] = [
+            "I can't sit still, I'm so restless.",
+            "I'm feeling really worked up right now.",
+            "I'm agitated and can't relax.",
+            "I'm on edge and can't calm down."
+        ]
+        
+        responses[EmotionalState.HOPEFUL] = [
+            "I'm hopeful that the treatment will work.",
+            "I feel optimistic about my recovery.",
+            "I'm looking forward to getting better.",
+            "I have hope that things will improve."
+        ]
+        
+        responses[EmotionalState.RELIEVED] = [
+            "I'm relieved to hear good news.",
+            "I feel better knowing what's going on.",
+            "I'm glad the test results were normal.",
+            "I'm relieved the procedure went well."
+        ]
+        
+        responses[EmotionalState.PAIN] = [
+            "I'm in a lot of pain right now.",
+            "The pain is really bad today.",
+            "I can't get comfortable because of the pain.",
+            "The pain is making it hard to function."
+        ]
+        
+        return responses
     
-    def _load_response_templates(self) -> Dict[str, Dict[str, List[str]]]:
-        """load response templates for different question types"""
-        return {
-            "pain_assessment": {
-                "cooperative": [
-                    "The pain is about a {intensity} out of 10. It's {location} and feels {quality}.",
-                    "I'd say it's a {intensity}/10. {location} hurts the most, and it's {quality}.",
-                    "The pain is {intensity}/10. It's in my {location} and feels {quality}."
-                ],
-                "anxious": [
-                    "It really hurts! Like a {intensity}/10. My {location} is {quality}.",
-                    "The pain is terrible, maybe {intensity}/10. My {location} feels {quality}.",
-                    "It's so painful! {intensity}/10. My {location} is {quality}."
-                ],
-                "stoic": [
-                    "Pain level {intensity}/10. {location}. {quality}.",
-                    "{intensity}/10. {location}. {quality}.",
-                    "Pain: {intensity}/10. {location}. {quality}."
-                ]
-            },
-            "symptom_inquiry": {
-                "cooperative": [
-                    "I've been experiencing {symptoms} for about {duration}.",
-                    "The symptoms started {duration} ago. I have {symptoms}.",
-                    "I've had {symptoms} for {duration} now."
-                ],
-                "anxious": [
-                    "I'm really worried about {symptoms}. It's been {duration}.",
-                    "I have {symptoms} and it's been {duration}. I'm scared.",
-                    "These {symptoms} started {duration} ago. I'm very concerned."
-                ],
-                "stoic": [
-                    "{symptoms}. {duration}.",
-                    "Symptoms: {symptoms}. Duration: {duration}.",
-                    "{symptoms} for {duration}."
-                ]
-            },
-            "medical_history": {
-                "cooperative": [
-                    "I have a history of {conditions}. I take {medications}.",
-                    "My medical history includes {conditions}. Current medications: {medications}.",
-                    "I've had {conditions} in the past. I'm on {medications}."
-                ],
-                "anxious": [
-                    "I have {conditions} and take {medications}. I'm worried about my health.",
-                    "My medical history: {conditions}. Medications: {medications}. I'm concerned.",
-                    "I have {conditions} and take {medications}. I'm very anxious about this."
-                ],
-                "stoic": [
-                    "History: {conditions}. Meds: {medications}.",
-                    "{conditions}. {medications}.",
-                    "Medical: {conditions}. Current: {medications}."
-                ]
-            },
-            "allergies": {
-                "cooperative": [
-                    "I'm allergic to {allergies}. I had {reactions}.",
-                    "My allergies include {allergies}. The reactions were {reactions}.",
-                    "I'm allergic to {allergies}. I experienced {reactions}."
-                ],
-                "anxious": [
-                    "I'm very allergic to {allergies}! I had {reactions}.",
-                    "I'm allergic to {allergies}. The reactions were {reactions}. I'm worried.",
-                    "I have severe allergies to {allergies}. I had {reactions}."
-                ],
-                "stoic": [
-                    "Allergies: {allergies}. Reactions: {reactions}.",
-                    "{allergies}. {reactions}.",
-                    "Allergic to {allergies}. {reactions}."
-                ]
-            },
-            "social_history": {
-                "cooperative": [
-                    "I work as a {occupation}. I {smoking_status} and {alcohol_use}.",
-                    "I'm a {occupation}. I {smoking_status} and {alcohol_use}.",
-                    "I work in {occupation}. I {smoking_status} and {alcohol_use}."
-                ],
-                "anxious": [
-                    "I'm a {occupation}. I {smoking_status} and {alcohol_use}. I'm worried about my job.",
-                    "I work as a {occupation}. I {smoking_status} and {alcohol_use}. I'm concerned.",
-                    "I'm a {occupation}. I {smoking_status} and {alcohol_use}. I'm anxious about this."
-                ],
-                "stoic": [
-                    "Occupation: {occupation}. Smoking: {smoking_status}. Alcohol: {alcohol_use}.",
-                    "{occupation}. {smoking_status}. {alcohol_use}.",
-                    "Work: {occupation}. {smoking_status}. {alcohol_use}."
-                ]
-            },
-            "family_history": {
-                "cooperative": [
-                    "My family has a history of {conditions}. My {relation} had {specific_condition}.",
-                    "In my family, we have {conditions}. My {relation} had {specific_condition}.",
-                    "Family history includes {conditions}. My {relation} had {specific_condition}."
-                ],
-                "anxious": [
-                    "My family has {conditions}. My {relation} had {specific_condition}. I'm worried.",
-                    "In my family: {conditions}. My {relation} had {specific_condition}. I'm concerned.",
-                    "Family history: {conditions}. My {relation} had {specific_condition}. I'm anxious."
-                ],
-                "stoic": [
-                    "Family: {conditions}. {relation}: {specific_condition}.",
-                    "{conditions}. {relation}: {specific_condition}.",
-                    "Family history: {conditions}. {relation}: {specific_condition}."
-                ]
-            },
-            "current_medications": {
-                "cooperative": [
-                    "I'm currently taking {medications} for {reasons}.",
-                    "My current medications are {medications}. They're for {reasons}.",
-                    "I take {medications} for {reasons}."
-                ],
-                "anxious": [
-                    "I'm on {medications} for {reasons}. I'm worried about side effects.",
-                    "I take {medications} for {reasons}. I'm concerned about interactions.",
-                    "My medications are {medications} for {reasons}. I'm anxious about this."
-                ],
-                "stoic": [
-                    "Meds: {medications}. For: {reasons}.",
-                    "{medications}. {reasons}.",
-                    "Current: {medications}. Reason: {reasons}."
-                ]
-            },
-            "last_oral_intake": {
-                "cooperative": [
-                    "I last ate {food} about {time} ago. I drank {fluids}.",
-                    "I had {food} {time} ago. I also had {fluids}.",
-                    "Last meal was {food} {time} ago. I drank {fluids}."
-                ],
-                "anxious": [
-                    "I ate {food} {time} ago. I had {fluids}. I'm worried about surgery.",
-                    "Last meal: {food} {time} ago. Fluids: {fluids}. I'm concerned.",
-                    "I had {food} {time} ago and {fluids}. I'm anxious about this."
-                ],
-                "stoic": [
-                    "Last meal: {food} {time} ago. Fluids: {fluids}.",
-                    "{food} {time} ago. {fluids}.",
-                    "Food: {food} {time} ago. Drinks: {fluids}."
-                ]
-            },
-            "events_leading": {
-                "cooperative": [
-                    "I was {activity} when {event} happened. Then I felt {symptoms}.",
-                    "I was {activity} and then {event} occurred. I developed {symptoms}.",
-                    "While {activity}, {event} happened. I started having {symptoms}."
-                ],
-                "anxious": [
-                    "I was {activity} when {event} happened! I got {symptoms} and I'm scared.",
-                    "I was {activity} and {event} occurred. I developed {symptoms}. I'm worried.",
-                    "While {activity}, {event} happened. I felt {symptoms}. I'm very concerned."
-                ],
-                "stoic": [
-                    "Activity: {activity}. Event: {event}. Symptoms: {symptoms}.",
-                    "{activity}. {event}. {symptoms}.",
-                    "Was {activity}. {event}. Then {symptoms}."
-                ]
-            }
+    def _initialize_communication_patterns(self) -> Dict[CommunicationStyle, Dict[str, Any]]:
+        """initialize communication style patterns"""
+        patterns = {}
+        
+        patterns[CommunicationStyle.DIRECT] = {
+            "responses": [
+                "Yes, I have chest pain.",
+                "No, I don't smoke.",
+                "I take aspirin daily.",
+                "The pain started yesterday."
+            ],
+            "question_style": "direct",
+            "detail_level": "high",
+            "cooperation": "high"
         }
-    
-    def _load_emotional_modifiers(self) -> Dict[str, Dict[str, str]]:
-        """load emotional modifiers for responses"""
-        return {
-            "high_anxiety": {
-                "prefix": ["I'm really worried about...", "I'm scared that...", "I'm very concerned about..."],
-                "suffix": ["...and I'm very anxious.", "...this is really frightening.", "...I'm quite worried."]
-            },
-            "high_pain": {
-                "prefix": ["The pain is really bad...", "It hurts so much...", "The pain is terrible..."],
-                "suffix": ["...and it's getting worse.", "...I can't take much more.", "...it's unbearable."]
-            },
-            "low_trust": {
-                "prefix": ["I'm not sure...", "I don't know if...", "I'm hesitant to..."],
-                "suffix": ["...but I'm not convinced.", "...I'm still worried.", "...I'm not sure this will help."]
-            },
-            "high_frustration": {
-                "prefix": ["I've already told you...", "I don't understand why...", "This is taking too long..."],
-                "suffix": ["...and I'm getting frustrated.", "...this is ridiculous.", "...I'm tired of this."]
-            },
-            "confusion": {
-                "prefix": ["I don't really understand...", "I'm confused about...", "I'm not sure what..."],
-                "suffix": ["...can you explain that again?", "...I'm still confused.", "...I need clarification."]
-            }
+        
+        patterns[CommunicationStyle.EVASIVE] = {
+            "responses": [
+                "I'm not sure about that.",
+                "Maybe, I don't really remember.",
+                "I think so, but I'm not certain.",
+                "I'd rather not talk about that."
+            ],
+            "question_style": "indirect",
+            "detail_level": "low",
+            "cooperation": "low"
         }
+        
+        patterns[CommunicationStyle.DETAILED] = {
+            "responses": [
+                "The pain started exactly at 3:45 PM yesterday while I was walking up the stairs. It felt like pressure in my chest and radiated to my left arm. I also felt short of breath and sweaty.",
+                "I take aspirin 81mg every morning, metoprolol 25mg twice daily, and atorvastatin 20mg at bedtime. I've been taking them for about 2 years now.",
+                "My family history includes my father who had a heart attack at age 55, my mother has diabetes, and my brother has high blood pressure."
+            ],
+            "question_style": "detailed",
+            "detail_level": "very_high",
+            "cooperation": "high"
+        }
+        
+        patterns[CommunicationStyle.VAGUE] = {
+            "responses": [
+                "I don't feel well.",
+                "It hurts somewhere.",
+                "I take some pills.",
+                "I'm not sure when it started."
+            ],
+            "question_style": "vague",
+            "detail_level": "very_low",
+            "cooperation": "variable"
+        }
+        
+        patterns[CommunicationStyle.COOPERATIVE] = {
+            "responses": [
+                "I'll do whatever you recommend.",
+                "I want to get better, so I'll follow your advice.",
+                "I'm willing to try any treatment you suggest.",
+                "I trust your medical judgment."
+            ],
+            "question_style": "cooperative",
+            "detail_level": "medium",
+            "cooperation": "very_high"
+        }
+        
+        patterns[CommunicationStyle.RESISTANT] = {
+            "responses": [
+                "I don't want to take that medication.",
+                "I'm not sure I need this test.",
+                "I'd rather not have that procedure.",
+                "I think I know what's best for me."
+            ],
+            "question_style": "defensive",
+            "detail_level": "low",
+            "cooperation": "low"
+        }
+        
+        patterns[CommunicationStyle.EMOTIONAL] = {
+            "responses": [
+                "I'm so scared about what's happening to me!",
+                "I can't believe this is happening again!",
+                "I'm really worried about my family!",
+                "I feel like my life is falling apart!"
+            ],
+            "question_style": "emotional",
+            "detail_level": "medium",
+            "cooperation": "variable"
+        }
+        
+        patterns[CommunicationStyle.LOGICAL] = {
+            "responses": [
+                "Based on my symptoms, I believe it could be related to my previous diagnosis.",
+                "I've researched this condition and understand the treatment options.",
+                "I'd like to discuss the risks and benefits of each approach.",
+                "I prefer evidence-based treatments."
+            ],
+            "question_style": "analytical",
+            "detail_level": "high",
+            "cooperation": "high"
+        }
+        
+        return patterns
     
-    def get_patient_response(self, question: str, context: DialogueContext, 
-                           patient_profile: str = "cooperative") -> str:
-        """generate context-aware patient response"""
-        # determine question type
-        question_type = self._classify_question(question)
+    def _initialize_pain_responses(self) -> Dict[PainLevel, List[str]]:
+        """initialize pain response patterns"""
+        responses = {}
+        
+        responses[PainLevel.NONE] = [
+            "I don't have any pain right now.",
+            "I'm pain-free at the moment.",
+            "No pain to report.",
+            "I feel fine, no discomfort."
+        ]
+        
+        responses[PainLevel.MILD] = [
+            "I have a slight discomfort.",
+            "It's just a mild ache.",
+            "I notice a little tenderness.",
+            "There's some minor discomfort."
+        ]
+        
+        responses[PainLevel.MODERATE] = [
+            "The pain is noticeable but manageable.",
+            "It's moderately painful but I can function.",
+            "I have moderate pain that's distracting.",
+            "The pain is significant but not severe."
+        ]
+        
+        responses[PainLevel.SEVERE] = [
+            "The pain is really bad right now.",
+            "I'm in severe pain and it's hard to focus.",
+            "The pain is intense and affecting my daily activities.",
+            "I'm experiencing severe pain that's very distressing."
+        ]
+        
+        responses[PainLevel.EXCRUCIATING] = [
+            "The pain is unbearable!",
+            "I can't take this pain anymore!",
+            "It's the worst pain I've ever experienced!",
+            "I'm in excruciating pain and need help immediately!"
+        ]
+        
+        return responses
+    
+    def initialize_patient_context(self, patient_id: str, emotional_state: EmotionalState = None,
+                                 communication_style: CommunicationStyle = None) -> str:
+        """initialize dialogue context for a patient"""
+        if emotional_state is None:
+            emotional_state = random.choice(list(EmotionalState))
+        
+        if communication_style is None:
+            communication_style = random.choice(list(CommunicationStyle))
+        
+        pain_level = random.choice(list(PainLevel))
+        trust_level = random.uniform(0.3, 1.0)
+        understanding_level = random.uniform(0.2, 0.9)
+        
+        emotion = PatientEmotion(
+            primary_emotion=emotional_state,
+            intensity=random.uniform(0.3, 1.0),
+            duration=timedelta(minutes=random.randint(30, 180)),
+            triggers=["medical procedures", "uncertainty about diagnosis"],
+            coping_mechanisms=["deep breathing", "positive thinking"],
+            affects_communication=True
+        )
+        
+        context = DialogueContext(
+            patient_id=patient_id,
+            current_emotion=emotion,
+            communication_style=communication_style,
+            pain_level=pain_level,
+            trust_level=trust_level,
+            understanding_level=understanding_level,
+            sensitive_topics=["family history", "mental health", "substance use"],
+            preferred_terms={"heart attack": "cardiac event", "cancer": "condition"},
+            cultural_background=random.choice(["american", "hispanic", "asian", "african-american"]),
+            language_preference="english"
+        )
+        
+        self.patient_contexts[patient_id] = context
+        
+        if patient_id not in self.conversations:
+            self.conversations[patient_id] = []
+        
+        return f"✓ Initialized dialogue context for patient {patient_id}"
+    
+    def get_patient_response(self, patient_id: str, doctor_message: str, 
+                           question_type: str = "general") -> DialogueResponse:
+        """generate a patient response to a doctor's message"""
+        if patient_id not in self.patient_contexts:
+            self.initialize_patient_context(patient_id)
+        
+        context = self.patient_contexts[patient_id]
+        emotion = context.current_emotion
+        style = context.communication_style
+        
+        # determine response based on question type and emotional state
+        if question_type == "pain_assessment":
+            response_text = self._generate_pain_response(context)
+        elif question_type == "emotional_assessment":
+            response_text = self._generate_emotional_response(context)
+        elif question_type == "symptom_inquiry":
+            response_text = self._generate_symptom_response(context, doctor_message)
+        elif question_type == "treatment_discussion":
+            response_text = self._generate_treatment_response(context, doctor_message)
+        elif question_type == "medical_history":
+            response_text = self._generate_history_response(context, doctor_message)
+        else:
+            response_text = self._generate_general_response(context, doctor_message)
+        
+        # adjust response based on communication style
+        response_text = self._apply_communication_style(response_text, style)
+        
+        # determine emotional impact
+        emotional_impact = self._calculate_emotional_impact(doctor_message, context)
         
         # update emotional state based on interaction
-        self._update_emotional_state(context, question_type)
+        self._update_emotional_state(context, emotional_impact)
         
-        # get base response template
-        response = self._get_base_response(question_type, patient_profile, context)
+        # record conversation
+        self._record_conversation(patient_id, "doctor", doctor_message, emotion.primary_emotion)
+        self._record_conversation(patient_id, "patient", response_text, emotion.primary_emotion)
         
-        # apply emotional modifiers
-        response = self._apply_emotional_modifiers(response, context.emotional_state)
-        
-        # add context-specific details
-        response = self._add_context_details(response, context, question_type)
-        
-        # record interaction
-        self._record_interaction(question, response, context)
-        
-        return response
+        return DialogueResponse(
+            text=response_text,
+            emotion=emotion.primary_emotion,
+            confidence=random.uniform(0.7, 1.0),
+            reveals_information=random.choice([True, False]),
+            requires_followup=random.choice([True, False]),
+            suggests_action=random.choice([True, False]),
+            emotional_impact=emotional_impact
+        )
     
-    def _classify_question(self, question: str) -> str:
-        """classify the type of question being asked"""
-        question_lower = question.lower()
+    def _generate_pain_response(self, context: DialogueContext) -> str:
+        """generate pain assessment response"""
+        pain_responses = self.pain_responses[context.pain_level]
+        base_response = random.choice(pain_responses)
         
-        if any(word in question_lower for word in ["pain", "hurt", "ache", "discomfort"]):
-            return "pain_assessment"
-        elif any(word in question_lower for word in ["symptom", "feel", "experience", "notice"]):
-            return "symptom_inquiry"
-        elif any(word in question_lower for word in ["history", "medical history", "past"]):
-            return "medical_history"
-        elif any(word in question_lower for word in ["allergy", "allergic", "reaction"]):
-            return "allergies"
-        elif any(word in question_lower for word in ["work", "job", "occupation", "smoke", "drink", "alcohol"]):
-            return "social_history"
-        elif any(word in question_lower for word in ["family", "parent", "sibling", "relative"]):
-            return "family_history"
-        elif any(word in question_lower for word in ["medication", "medicine", "pill", "drug"]):
-            return "current_medications"
-        elif any(word in question_lower for word in ["eat", "food", "meal", "drink", "last"]):
-            return "last_oral_intake"
-        elif any(word in question_lower for word in ["happen", "occur", "event", "leading", "before"]):
-            return "events_leading"
+        if context.pain_level in [PainLevel.SEVERE, PainLevel.EXCRUCIATING]:
+            base_response += " I really need something for the pain."
+        
+        return base_response
+    
+    def _generate_emotional_response(self, context: DialogueContext) -> str:
+        """generate emotional assessment response"""
+        emotion_responses = self.emotional_responses[context.current_emotion.primary_emotion]
+        return random.choice(emotion_responses)
+    
+    def _generate_symptom_response(self, context: DialogueContext, doctor_message: str) -> str:
+        """generate symptom inquiry response"""
+        if "chest pain" in doctor_message.lower():
+            if context.current_emotion.primary_emotion in [EmotionalState.FEARFUL, EmotionalState.ANXIOUS]:
+                return "Yes, I have chest pain and I'm really worried about it. It feels like pressure and sometimes radiates to my arm."
+            else:
+                return "Yes, I have some chest pain. It's been on and off for the past few hours."
+        
+        elif "shortness of breath" in doctor_message.lower():
+            return "I do feel short of breath, especially when I walk or climb stairs."
+        
+        elif "fever" in doctor_message.lower():
+            return "I think I might have a fever. I feel hot and sweaty."
+        
         else:
-            return "general_inquiry"
+            return "I'm not sure about that symptom. Can you be more specific?"
     
-    def _get_base_response(self, question_type: str, patient_profile: str, 
-                          context: DialogueContext) -> str:
-        """get base response template"""
-        if question_type not in self.response_templates:
-            return "I'm not sure how to answer that."
-        
-        templates = self.response_templates[question_type].get(patient_profile, 
-                    self.response_templates[question_type]["cooperative"])
-        
-        return random.choice(templates)
+    def _generate_treatment_response(self, context: DialogueContext, doctor_message: str) -> str:
+        """generate treatment discussion response"""
+        if context.communication_style == CommunicationStyle.COOPERATIVE:
+            return "I'm willing to try whatever treatment you recommend. I trust your medical judgment."
+        elif context.communication_style == CommunicationStyle.RESISTANT:
+            return "I'm not sure I want that treatment. Are there other options?"
+        elif context.communication_style == CommunicationStyle.LOGICAL:
+            return "I'd like to understand the risks and benefits of this treatment before deciding."
+        else:
+            return "I'll think about it and let you know."
     
-    def _update_emotional_state(self, context: DialogueContext, question_type: str) -> None:
-        """update emotional state based on interaction"""
-        # increase anxiety for medical questions
-        if question_type in ["medical_history", "allergies", "current_medications"]:
-            context.emotional_state.anxiety_level = min(1.0, context.emotional_state.anxiety_level + 0.1)
-        
-        # increase pain awareness for pain questions
-        if question_type == "pain_assessment":
-            context.emotional_state.pain_level = min(1.0, context.emotional_state.pain_level + 0.2)
-        
-        # increase confusion for complex questions
-        if question_type in ["family_history", "events_leading"]:
-            context.emotional_state.confusion_level = min(1.0, context.emotional_state.confusion_level + 0.15)
+    def _generate_history_response(self, context: DialogueContext, doctor_message: str) -> str:
+        """generate medical history response"""
+        if context.communication_style == CommunicationStyle.DETAILED:
+            return "My father had a heart attack at age 55, my mother has diabetes, and I have high blood pressure myself."
+        elif context.communication_style == CommunicationStyle.EVASIVE:
+            return "I'm not sure about my family history. I don't really know much about that."
+        else:
+            return "My family has some history of heart disease and diabetes."
     
-    def _apply_emotional_modifiers(self, response: str, emotional_state: PatientEmotionalState) -> str:
-        """apply emotional modifiers to response"""
-        modifiers = []
+    def _generate_general_response(self, context: DialogueContext, doctor_message: str) -> str:
+        """generate general response"""
+        if context.current_emotion.primary_emotion == EmotionalState.ANXIOUS:
+            return "I'm feeling a bit nervous about all of this. Can you explain what's happening?"
+        elif context.current_emotion.primary_emotion == EmotionalState.PAIN:
+            return "I'm in pain and really need help. Can you do something about it?"
+        else:
+            return "I understand. What do you recommend?"
+    
+    def _apply_communication_style(self, response: str, style: CommunicationStyle) -> str:
+        """apply communication style to response"""
+        patterns = self.communication_patterns[style]
         
-        if emotional_state.anxiety_level > 0.7:
-            modifiers.append(random.choice(self.emotional_modifiers["high_anxiety"]["prefix"]))
-        if emotional_state.pain_level > 0.8:
-            modifiers.append(random.choice(self.emotional_modifiers["high_pain"]["prefix"]))
-        if emotional_state.trust_level < 0.3:
-            modifiers.append(random.choice(self.emotional_modifiers["low_trust"]["prefix"]))
-        if emotional_state.frustration_level > 0.6:
-            modifiers.append(random.choice(self.emotional_modifiers["high_frustration"]["prefix"]))
-        if emotional_state.confusion_level > 0.5:
-            modifiers.append(random.choice(self.emotional_modifiers["confusion"]["prefix"]))
-        
-        # apply prefix modifiers
-        if modifiers:
-            response = " ".join(modifiers) + " " + response
-        
-        # apply suffix modifiers
-        suffix_modifiers = []
-        if emotional_state.anxiety_level > 0.6:
-            suffix_modifiers.append(random.choice(self.emotional_modifiers["high_anxiety"]["suffix"]))
-        if emotional_state.pain_level > 0.7:
-            suffix_modifiers.append(random.choice(self.emotional_modifiers["high_pain"]["suffix"]))
-        if emotional_state.trust_level < 0.4:
-            suffix_modifiers.append(random.choice(self.emotional_modifiers["low_trust"]["suffix"]))
-        if emotional_state.frustration_level > 0.5:
-            suffix_modifiers.append(random.choice(self.emotional_modifiers["high_frustration"]["suffix"]))
-        if emotional_state.confusion_level > 0.4:
-            suffix_modifiers.append(random.choice(self.emotional_modifiers["confusion"]["suffix"]))
-        
-        if suffix_modifiers:
-            response += " " + " ".join(suffix_modifiers)
+        if style == CommunicationStyle.EMOTIONAL:
+            response += " I'm really emotional about this!"
+        elif style == CommunicationStyle.VAGUE:
+            response = response.replace("chest pain", "discomfort")
+            response = response.replace("severe", "some")
         
         return response
     
-    def _add_context_details(self, response: str, context: DialogueContext, 
-                           question_type: str) -> str:
-        """add context-specific details to response"""
-        # fill in template variables based on context
-        if question_type == "pain_assessment":
-            response = response.format(
-                intensity=random.randint(3, 8),
-                location=random.choice(["chest", "abdomen", "head", "back", "arm", "leg"]),
-                quality=random.choice(["sharp", "dull", "throbbing", "burning", "cramping", "aching"])
-            )
-        elif question_type == "symptom_inquiry":
-            response = response.format(
-                symptoms=random.choice(["nausea", "dizziness", "shortness of breath", "chest pain", "headache"]),
-                duration=random.choice(["a few hours", "several days", "about a week", "since this morning"])
-            )
-        elif question_type == "medical_history":
-            response = response.format(
-                conditions=random.choice(["hypertension", "diabetes", "asthma", "depression", "arthritis"]),
-                medications=random.choice(["lisinopril", "metformin", "albuterol", "sertraline", "ibuprofen"])
-            )
-        elif question_type == "allergies":
-            response = response.format(
-                allergies=random.choice(["penicillin", "sulfa drugs", "aspirin", "latex", "peanuts"]),
-                reactions=random.choice(["rash", "swelling", "difficulty breathing", "hives", "nausea"])
-            )
-        elif question_type == "social_history":
-            response = response.format(
-                occupation=random.choice(["teacher", "construction worker", "nurse", "retired", "student"]),
-                smoking_status=random.choice(["don't smoke", "quit 5 years ago", "smoke occasionally", "never smoked"]),
-                alcohol_use=random.choice(["don't drink", "occasionally", "socially", "rarely"])
-            )
-        elif question_type == "family_history":
-            response = response.format(
-                conditions=random.choice(["heart disease", "diabetes", "cancer", "hypertension", "asthma"]),
-                relation=random.choice(["father", "mother", "sister", "brother", "grandfather"]),
-                specific_condition=random.choice(["heart attack", "diabetes", "lung cancer", "stroke", "breast cancer"])
-            )
-        elif question_type == "current_medications":
-            response = response.format(
-                medications=random.choice(["lisinopril", "metformin", "aspirin", "atorvastatin", "omeprazole"]),
-                reasons=random.choice(["high blood pressure", "diabetes", "heart disease", "acid reflux", "cholesterol"])
-            )
-        elif question_type == "last_oral_intake":
-            response = response.format(
-                food=random.choice(["sandwich", "pizza", "salad", "soup", "breakfast"]),
-                time=random.choice(["2 hours", "4 hours", "6 hours", "8 hours", "12 hours"]),
-                fluids=random.choice(["water", "coffee", "soda", "juice", "tea"])
-            )
-        elif question_type == "events_leading":
-            response = response.format(
-                activity=random.choice(["working", "exercising", "sleeping", "eating", "driving"]),
-                event=random.choice(["I felt chest pain", "I became dizzy", "I fell", "I had trouble breathing", "I felt nauseous"]),
-                symptoms=random.choice(["chest pain", "shortness of breath", "dizziness", "nausea", "sweating"])
-            )
+    def _calculate_emotional_impact(self, message: str, context: DialogueContext) -> float:
+        """calculate emotional impact of doctor's message"""
+        impact = 0.0
         
-        return response
-    
-    def _record_interaction(self, question: str, response: str, context: DialogueContext) -> None:
-        """record the interaction for conversation history"""
-        self.conversation_flow.append({
-            'timestamp': context.time_elapsed,
-            'question': question,
-            'response': response,
-            'emotional_state': {
-                'anxiety': context.emotional_state.anxiety_level,
-                'pain': context.emotional_state.pain_level,
-                'trust': context.emotional_state.trust_level,
-                'cooperation': context.emotional_state.cooperation_level,
-                'confusion': context.emotional_state.confusion_level,
-                'frustration': context.emotional_state.frustration_level
-            }
-        })
-    
-    def get_conversation_summary(self) -> Dict[str, Any]:
-        """get summary of conversation flow and emotional progression"""
-        if not self.conversation_flow:
-            return {"message": "No conversation recorded yet."}
+        # positive words
+        positive_words = ["good", "better", "improving", "reassuring", "normal", "fine"]
+        for word in positive_words:
+            if word in message.lower():
+                impact += 0.2
         
+        # negative words
+        negative_words = ["serious", "urgent", "emergency", "critical", "dangerous", "worrying"]
+        for word in negative_words:
+            if word in message.lower():
+                impact -= 0.3
+        
+        # question types
+        if "how are you feeling" in message.lower():
+            impact += 0.1  # shows concern
+        elif "pain" in message.lower():
+            impact -= 0.1  # reminds of pain
+        
+        return max(-1.0, min(1.0, impact))
+    
+    def _update_emotional_state(self, context: DialogueContext, emotional_impact: float):
+        """update patient's emotional state based on interaction"""
+        current_emotion = context.current_emotion.primary_emotion
+        
+        if emotional_impact > 0.3:
+            # positive impact
+            if current_emotion in [EmotionalState.ANXIOUS, EmotionalState.FEARFUL]:
+                context.current_emotion.primary_emotion = EmotionalState.HOPEFUL
+            elif current_emotion == EmotionalState.PAIN:
+                context.current_emotion.primary_emotion = EmotionalState.RELIEVED
+        elif emotional_impact < -0.3:
+            # negative impact
+            if current_emotion in [EmotionalState.CALM, EmotionalState.HOPEFUL]:
+                context.current_emotion.primary_emotion = EmotionalState.ANXIOUS
+            elif current_emotion == EmotionalState.RELIEVED:
+                context.current_emotion.primary_emotion = EmotionalState.FEARFUL
+        
+        # update intensity
+        context.current_emotion.intensity = max(0.1, min(1.0, 
+            context.current_emotion.intensity + emotional_impact * 0.2))
+    
+    def _record_conversation(self, patient_id: str, speaker: str, message: str, emotion: EmotionalState):
+        """record conversation history"""
+        history_entry = ConversationHistory(
+            timestamp=datetime.now(),
+            speaker=speaker,
+            message=message,
+            emotion=emotion
+        )
+        
+        self.conversations[patient_id].append(history_entry)
+    
+    def get_conversation_history(self, patient_id: str) -> List[ConversationHistory]:
+        """get conversation history for a patient"""
+        return self.conversations.get(patient_id, [])
+    
+    def get_patient_context(self, patient_id: str) -> Optional[DialogueContext]:
+        """get patient dialogue context"""
+        return self.patient_contexts.get(patient_id)
+    
+    def update_patient_emotion(self, patient_id: str, emotion: EmotionalState, intensity: float = None):
+        """update patient's emotional state"""
+        if patient_id in self.patient_contexts:
+            context = self.patient_contexts[patient_id]
+            context.current_emotion.primary_emotion = emotion
+            if intensity is not None:
+                context.current_emotion.intensity = intensity
+    
+    def get_emotional_summary(self, patient_id: str) -> Dict[str, Any]:
+        """get emotional summary for a patient"""
+        if patient_id not in self.patient_contexts:
+            return {"error": "Patient context not found"}
+        
+        context = self.patient_contexts[patient_id]
         return {
-            'total_interactions': len(self.conversation_flow),
-            'emotional_progression': self._analyze_emotional_progression(),
-            'conversation_flow': self.conversation_flow[-5:],  # last 5 interactions
-            'overall_emotional_state': self._get_overall_emotional_state()
-        }
-    
-    def _analyze_emotional_progression(self) -> Dict[str, List[float]]:
-        """analyze how emotional states changed over time"""
-        progression = {
-            'anxiety': [],
-            'pain': [],
-            'trust': [],
-            'cooperation': [],
-            'confusion': [],
-            'frustration': []
-        }
-        
-        for interaction in self.conversation_flow:
-            emotional_state = interaction['emotional_state']
-            for key in progression:
-                progression[key].append(emotional_state[key])
-        
-        return progression
-    
-    def _get_overall_emotional_state(self) -> Dict[str, float]:
-        """get average emotional state across all interactions"""
-        if not self.conversation_flow:
-            return {}
-        
-        latest = self.conversation_flow[-1]['emotional_state']
-        return latest
-    
-    def reset_conversation(self) -> None:
-        """reset conversation history"""
-        self.conversation_flow.clear()
-        self.context_history.clear() 
+            'current_emotion': context.current_emotion.primary_emotion.value,
+            'emotion_intensity': context.current_emotion.intensity,
+            'communication_style': context.communication_style.value,
+            'pain_level': context.pain_level.value,
+            'trust_level': context.trust_level,
+            'understanding_level': context.understanding_level,
+            'conversation_count': len(self.conversations.get(patient_id, []))
+        } 

@@ -1,991 +1,580 @@
 """
-advanced treatment system with comprehensive medication management and dosing
+enhanced treatment system with sophisticated drug interactions and clinical protocols
 """
 
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
+from enum import Enum
 from datetime import datetime, timedelta
 import random
 import math
+import json
+
+
+class DrugCategory(Enum):
+    """enhanced drug categories"""
+    CARDIOVASCULAR = "cardiovascular"
+    RESPIRATORY = "respiratory"
+    ANALGESIC = "analgesic"
+    ANTIBIOTIC = "antibiotic"
+    ANTICOAGULANT = "anticoagulant"
+    ANTIEMETIC = "antiemetic"
+    DIURETIC = "diuretic"
+    INSULIN = "insulin"
+    SEDATIVE = "sedative"
+    VASOPRESSOR = "vasopressor"
+    BRONCHODILATOR = "bronchodilator"
+    ANTIARRHYTHMIC = "antiarrhythmic"
+
+
+class Route(Enum):
+    """drug administration routes"""
+    ORAL = "oral"
+    INTRAVENOUS = "iv"
+    INTRAMUSCULAR = "im"
+    SUBCUTANEOUS = "sc"
+    INHALED = "inhaled"
+    TOPICAL = "topical"
+    RECTAL = "rectal"
+    SUBLINGUAL = "sublingual"
+
+
+class InteractionSeverity(Enum):
+    """drug interaction severity levels"""
+    NONE = "none"
+    MILD = "mild"
+    MODERATE = "moderate"
+    SEVERE = "severe"
+    CONTRAINDICATED = "contraindicated"
 
 
 @dataclass
-class Medication:
-    """medication definition with comprehensive properties"""
-    name: str
-    category: str
+class DrugInteraction:
+    """drug interaction definition"""
+    drug1: str
+    drug2: str
+    severity: InteractionSeverity
     mechanism: str
-    indications: List[str]
-    contraindications: List[str]
-    side_effects: List[str]
-    drug_interactions: List[str]
-    dosing_adult: Dict[str, Any]
-    dosing_pediatric: Dict[str, Any]
-    dosage_forms: List[str] = field(default_factory=list)
-    renal_adjustment: bool = False
-    hepatic_adjustment: bool = False
-    pregnancy_category: str = "C"
-    cost_per_dose: float = 10.0
-    description: str = ""
-    onset_time: int = 5  # minutes
-    duration: int = 240  # minutes
-    monitoring_required: List[str] = field(default_factory=list)
+    effect: str
+    recommendation: str
+    evidence_level: str = "moderate"  # low, moderate, high
 
 
 @dataclass
-class TreatmentOrder:
-    """treatment order with dosing and administration details"""
-    medication: str
-    dose: float
+class DrugLevel:
+    """enhanced drug level monitoring"""
+    drug_name: str
+    current_level: float
+    therapeutic_range: Tuple[float, float]
     unit: str
-    route: str
-    frequency: str
-    duration: str
-    patient_weight: float
-    patient_age: int
-    renal_function: float
-    hepatic_function: str
-    allergies: List[str]
-    current_medications: List[str]
-    order_time: datetime
-    status: str = "ordered"  # ordered, administered, completed, discontinued
-    administration_time: Optional[datetime] = None
-    effects: Dict[str, Any] = field(default_factory=dict)
+    timestamp: datetime
+    is_therapeutic: bool = True
+    is_toxic: bool = False
+    requires_dose_adjustment: bool = False
+    half_life: float = 0.0  # hours
+    clearance_rate: float = 0.0  # L/hour
 
 
 @dataclass
-class Procedure:
-    """clinical procedure definition"""
+class Drug:
+    """enhanced drug definition"""
     name: str
-    steps: list
-    indications: list
-    contraindications: list
-    complications: list
-    required_equipment: list
-    success_rate: float = 0.98
-    time_required: int = 10  # minutes
-    documentation: str = ""
+    category: DrugCategory
+    routes: List[Route]
+    dosing_info: Dict[str, Any]
+    therapeutic_range: Optional[Tuple[float, float]] = None
+    unit: str = ""
+    half_life: float = 0.0  # hours
+    protein_binding: float = 0.0  # percentage
+    metabolism: str = ""
+    excretion: str = ""
+    contraindications: List[str] = field(default_factory=list)
+    side_effects: List[str] = field(default_factory=list)
+    monitoring_required: bool = False
+    cost_per_unit: float = 0.0
 
 
 @dataclass
-class Protocol:
-    """clinical protocol or order set"""
+class TreatmentProtocol:
+    """enhanced treatment protocol"""
     name: str
-    steps: list
-    indications: list
-    contraindications: list
-    bundled_orders: list
-    documentation: str = ""
+    condition: str
+    description: str
+    steps: List[Dict[str, Any]]
+    evidence_level: str = "moderate"
+    success_rate: float = 0.8
+    duration: int = 0  # hours
+    cost: float = 0.0
+    complications: List[str] = field(default_factory=list)
 
 
-class ProcedureSystem:
-    """system for managing clinical procedures and protocols"""
+@dataclass
+class TreatmentSession:
+    """enhanced treatment session"""
+    patient_id: str
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    treatments: List[Dict[str, Any]] = field(default_factory=list)
+    protocols_used: List[str] = field(default_factory=list)
+    outcomes: List[str] = field(default_factory=list)
+    complications: List[str] = field(default_factory=list)
+    success: bool = True
+
+
+class EnhancedTreatmentEngine:
+    """enhanced treatment engine with sophisticated drug management"""
+    
     def __init__(self):
-        self.procedures = self._initialize_procedures()
+        self.drugs = self._initialize_drugs()
+        self.interactions = self._initialize_interactions()
         self.protocols = self._initialize_protocols()
-        self.active_procedures = {}
-        self.procedure_history = []
-        self.protocol_history = []
-
-    def _initialize_procedures(self):
-        procedures = {}
-        # Airway
-        procedures["cricothyrotomy"] = Procedure(
-            name="Surgical Cricothyrotomy",
-            steps=[
-                "Identify cricothyroid membrane",
-                "Prep and anesthetize",
-                "Incise skin and membrane",
-                "Insert tracheostomy tube",
-                "Secure tube and confirm placement"
-            ],
-            indications=["cannot intubate/cannot oxygenate", "upper airway obstruction"],
-            contraindications=["children <10 years (relative)", "laryngeal fracture"],
-            complications=["bleeding", "misplacement", "subcutaneous emphysema", "infection"],
-            required_equipment=["scalpel", "tracheostomy tube", "suction", "syringe"],
-            success_rate=0.90,
-            time_required=8,
-            documentation="Cricothyrotomy performed for failed airway. Tube secured. Placement confirmed."
-        )
-        procedures["bag_valve_mask"] = Procedure(
-            name="Bag-Valve-Mask Ventilation",
-            steps=[
-                "Position patient",
-                "Open airway (head tilt/chin lift or jaw thrust)",
-                "Seal mask",
-                "Deliver breaths, observe chest rise"
-            ],
-            indications=["apnea", "respiratory failure", "pre-oxygenation"],
-            contraindications=["complete upper airway obstruction"],
-            complications=["gastric insufflation", "aspiration", "hypoventilation"],
-            required_equipment=["BVM", "mask", "oxygen source"],
-            success_rate=0.98,
-            time_required=3,
-            documentation="BVM ventilation provided with good chest rise."
-        )
-        # Vascular
-        procedures["arterial_line"] = Procedure(
-            name="Arterial Line Placement",
-            steps=[
-                "Prepare and drape site",
-                "Anesthetize",
-                "Insert needle/catheter",
-                "Confirm placement (waveform)",
-                "Secure line"
-            ],
-            indications=["hemodynamic monitoring", "frequent ABGs", "vasopressor use"],
-            contraindications=["infection at site", "poor collateral flow"],
-            complications=["thrombosis", "bleeding", "infection", "arterial spasm"],
-            required_equipment=["arterial line kit", "pressure bag", "transducer"],
-            success_rate=0.93,
-            time_required=12,
-            documentation="Radial arterial line placed, waveform confirmed."
-        )
-        procedures["intraosseous_access"] = Procedure(
-            name="Intraosseous Access",
-            steps=[
-                "Identify site (proximal tibia/humerus)",
-                "Prep and anesthetize",
-                "Insert IO needle",
-                "Confirm placement (aspirate, flush)",
-                "Secure needle"
-            ],
-            indications=["emergent access", "failed IV access"],
-            contraindications=["fracture at site", "infection at site"],
-            complications=["extravasation", "osteomyelitis", "growth plate injury"],
-            required_equipment=["IO needle", "drill", "flush", "dressing"],
-            success_rate=0.97,
-            time_required=2,
-            documentation="IO access obtained in left proximal tibia. Good flow."
-        )
-        # Resuscitation
-        procedures["defibrillation"] = Procedure(
-            name="Defibrillation",
-            steps=[
-                "Apply pads",
-                "Charge defibrillator",
-                "Clear patient",
-                "Deliver shock",
-                "Resume CPR"
-            ],
-            indications=["VF/VT arrest"],
-            contraindications=["asystole", "PEA"],
-            complications=["skin burns", "arrhythmia", "equipment failure"],
-            required_equipment=["defibrillator", "pads", "gel"],
-            success_rate=0.99,
-            time_required=1,
-            documentation="Defibrillation delivered for VF. Immediate CPR resumed."
-        )
-        procedures["cardioversion"] = Procedure(
-            name="Synchronized Cardioversion",
-            steps=[
-                "Apply pads",
-                "Set to sync mode",
-                "Select energy",
-                "Clear patient",
-                "Deliver shock"
-            ],
-            indications=["unstable tachyarrhythmia"],
-            contraindications=["sinus rhythm", "asystole"],
-            complications=["skin burns", "arrhythmia", "embolism"],
-            required_equipment=["defibrillator", "pads", "sedation"],
-            success_rate=0.97,
-            time_required=2,
-            documentation="Synchronized cardioversion performed for unstable SVT."
-        )
-        procedures["external_pacing"] = Procedure(
-            name="Transcutaneous Pacing",
-            steps=[
-                "Apply pads",
-                "Set pacing rate and output",
-                "Confirm capture",
-                "Monitor patient"
-            ],
-            indications=["unstable bradycardia"],
-            contraindications=["asystole", "VF"],
-            complications=["discomfort", "skin burns", "failure to capture"],
-            required_equipment=["pacer/defibrillator", "pads"],
-            success_rate=0.95,
-            time_required=3,
-            documentation="Transcutaneous pacing initiated for bradycardia. Capture confirmed."
-        )
-        # Trauma
-        procedures["fast_exam"] = Procedure(
-            name="Focused Assessment with Sonography for Trauma (FAST)",
-            steps=[
-                "Apply ultrasound gel",
-                "Scan RUQ, LUQ, pelvis, pericardium",
-                "Interpret findings"
-            ],
-            indications=["blunt trauma", "hypotension"],
-            contraindications=[],
-            complications=["missed injury", "false positive/negative"],
-            required_equipment=["ultrasound machine", "gel"],
-            success_rate=0.98,
-            time_required=5,
-            documentation="FAST exam performed, no free fluid identified."
-        )
-        procedures["pelvic_binder"] = Procedure(
-            name="Pelvic Binder Placement",
-            steps=[
-                "Position binder at greater trochanters",
-                "Tighten and secure binder"
-            ],
-            indications=["pelvic fracture", "unstable pelvis"],
-            contraindications=["open pelvic wound"],
-            complications=["skin breakdown", "nerve injury"],
-            required_equipment=["pelvic binder"],
-            success_rate=0.99,
-            time_required=1,
-            documentation="Pelvic binder placed for unstable pelvic fracture."
-        )
-        # Neuro
-        procedures["lumbar_puncture"] = Procedure(
-            name="Lumbar Puncture",
-            steps=[
-                "Position patient",
-                "Prep and drape",
-                "Identify L3-L4/L4-L5 space",
-                "Insert spinal needle",
-                "Collect CSF",
-                "Remove needle and apply dressing"
-            ],
-            indications=["meningitis workup", "subarachnoid hemorrhage"],
-            contraindications=["increased ICP", "coagulopathy", "infection at site"],
-            complications=["headache", "bleeding", "infection", "herniation"],
-            required_equipment=["spinal needle", "sterile kit", "manometer"],
-            success_rate=0.95,
-            time_required=15,
-            documentation="LP performed, clear CSF obtained."
-        )
-        # GI
-        procedures["ng_tube"] = Procedure(
-            name="Nasogastric Tube Placement",
-            steps=[
-                "Measure and mark tube",
-                "Lubricate",
-                "Insert via nostril",
-                "Advance to oropharynx",
-                "Have patient swallow",
-                "Advance to stomach",
-                "Confirm placement (aspirate, CXR)"
-            ],
-            indications=["bowel obstruction", "GI bleed", "decompression"],
-            contraindications=["basilar skull fracture", "esophageal varices"],
-            complications=["epistaxis", "misplacement", "aspiration"],
-            required_equipment=["NG tube", "lubricant", "syringe", "CXR"],
-            success_rate=0.96,
-            time_required=6,
-            documentation="NG tube placed, placement confirmed by aspirate and CXR."
-        )
-        procedures["paracentesis"] = Procedure(
-            name="Paracentesis",
-            steps=[
-                "Prep and drape",
-                "Identify site (US guidance preferred)",
-                "Anesthetize",
-                "Insert needle/catheter",
-                "Aspirate fluid",
-                "Remove needle, apply dressing"
-            ],
-            indications=["ascites", "diagnostic workup"],
-            contraindications=["infection at site", "coagulopathy"],
-            complications=["bleeding", "infection", "bowel perforation"],
-            required_equipment=["paracentesis kit", "ultrasound", "dressing"],
-            success_rate=0.97,
-            time_required=10,
-            documentation="Paracentesis performed, clear fluid obtained."
-        )
-        # OB/GYN
-        procedures["vaginal_delivery"] = Procedure(
-            name="Vaginal Delivery",
-            steps=[
-                "Prepare delivery area",
-                "Support perineum",
-                "Deliver head, check for nuchal cord",
-                "Deliver shoulders and body",
-                "Clamp and cut cord",
-                "Deliver placenta"
-            ],
-            indications=["term pregnancy, labor"],
-            contraindications=["malpresentation", "placenta previa"],
-            complications=["postpartum hemorrhage", "shoulder dystocia", "perineal tear"],
-            required_equipment=["delivery kit", "clamps", "suction", "warm blankets"],
-            success_rate=0.99,
-            time_required=30,
-            documentation="Vaginal delivery performed, healthy infant delivered."
-        )
-        # Pediatrics
-        procedures["broselow_tape"] = Procedure(
-            name="Broselow Tape Assessment",
-            steps=[
-                "Lay child on tape",
-                "Read weight/medication zone",
-                "Select equipment/doses accordingly"
-            ],
-            indications=["pediatric resuscitation"],
-            contraindications=[],
-            complications=["incorrect zone selection"],
-            required_equipment=["Broselow tape"],
-            success_rate=0.99,
-            time_required=1,
-            documentation="Broselow tape used for pediatric dosing/equipment selection."
-        )
-        return procedures
-
-    def _initialize_protocols(self):
-        protocols = {}
-        protocols["acls"] = Protocol(
-            name="ACLS/Cardiac Arrest Algorithm",
-            steps=[
-                "Start CPR",
-                "Attach monitor/defibrillator",
-                "Identify rhythm",
-                "Defibrillate if indicated",
-                "Administer epinephrine/amiodarone",
-                "Airway management",
-                "Reversible causes",
-                "Post-arrest care"
-            ],
-            indications=["cardiac arrest"],
-            contraindications=[],
-            bundled_orders=["defibrillation", "intubation", "epinephrine", "amiodarone"],
-            documentation="ACLS protocol followed for cardiac arrest."
-        )
-        protocols["sepsis"] = Protocol(
-            name="Sepsis Bundle",
-            steps=[
-                "Obtain cultures",
-                "Administer broad-spectrum antibiotics",
-                "Administer IV fluids",
-                "Check lactate",
-                "Start vasopressors if needed",
-                "Monitor urine output"
-            ],
-            indications=["suspected sepsis", "septic shock"],
-            contraindications=[],
-            bundled_orders=["blood_cultures", "ceftriaxone", "normal_saline", "norepinephrine"],
-            documentation="Sepsis bundle initiated per protocol."
-        )
-        protocols["stroke"] = Protocol(
-            name="Acute Stroke Protocol",
-            steps=[
-                "Activate stroke team",
-                "Obtain CT head",
-                "Check glucose",
-                "Assess tPA eligibility",
-                "Administer tPA if indicated",
-                "Monitor neuro status"
-            ],
-            indications=["acute stroke symptoms"],
-            contraindications=["bleeding", "recent surgery"],
-            bundled_orders=["ct_head", "glucose", "tpa"],
-            documentation="Stroke protocol followed, tPA administered as indicated."
-        )
-        protocols["trauma"] = Protocol(
-            name="Trauma/ATLS Protocol",
-            steps=[
-                "Primary survey (ABCDE)",
-                "Resuscitation",
-                "Secondary survey",
-                "Imaging",
-                "Definitive care"
-            ],
-            indications=["major trauma"],
-            contraindications=[],
-            bundled_orders=["fast_exam", "pelvic_binder", "blood_transfusion"],
-            documentation="ATLS protocol followed for trauma patient."
-        )
-        protocols["dka"] = Protocol(
-            name="DKA/HHS Protocol",
-            steps=[
-                "Start IV fluids",
-                "Check glucose, electrolytes",
-                "Start insulin infusion",
-                "Monitor potassium",
-                "Monitor for complications"
-            ],
-            indications=["DKA", "HHS"],
-            contraindications=[],
-            bundled_orders=["normal_saline", "insulin_regular", "potassium"],
-            documentation="DKA protocol initiated. Insulin and fluids started."
-        )
-        protocols["massive_transfusion"] = Protocol(
-            name="Massive Transfusion Protocol",
-            steps=[
-                "Activate protocol",
-                "Order blood products (PRBC, FFP, platelets)",
-                "Monitor calcium",
-                "Monitor for complications"
-            ],
-            indications=["hemorrhagic shock", "major trauma"],
-            contraindications=[],
-            bundled_orders=["prbc", "ffp", "platelets", "calcium"],
-            documentation="Massive transfusion protocol activated."
-        )
-        return protocols
-
-    def perform_procedure(self, patient_id: str, procedure_name: str) -> dict:
-        if procedure_name not in self.procedures:
-            return {"success": False, "error": "procedure not found"}
-        procedure = self.procedures[procedure_name]
-        # Simulate success/failure
-        success = random.random() < procedure.success_rate
-        complications = []
-        if not success:
-            complications = [random.choice(procedure.complications)]
-        # Record procedure
-        record = {
-            "patient_id": patient_id,
-            "procedure": procedure_name,
-            "success": success,
-            "complications": complications,
-            "timestamp": datetime.now().isoformat(),
-            "documentation": procedure.documentation
-        }
-        self.procedure_history.append(record)
-        return record
-
-
-class AdvancedTreatmentSystem:
-    """advanced treatment system with comprehensive medication management"""
+        self.active_treatments: Dict[str, List[Dict[str, Any]]] = {}
+        self.drug_levels: Dict[str, List[DrugLevel]] = {}
+        self.treatment_sessions: List[TreatmentSession] = []
     
-    def __init__(self):
-        self.medications = self._initialize_medications()
-        self.active_orders = {}
-        self.administration_history = []
-        self.monitoring_alerts = []
-        self.procedures = ProcedureSystem()  # Integrate procedure system
+    def _initialize_drugs(self) -> Dict[str, Drug]:
+        """initialize comprehensive drug database"""
+        drugs = {}
         
-    def _initialize_medications(self) -> Dict[str, Medication]:
-        """initialize comprehensive medication formulary"""
-        medications = {}
-        
-        # antiplatelet agents
-        medications["aspirin"] = Medication(
-            name="Aspirin",
-            category="Antiplatelet",
-            mechanism="Irreversible COX-1 inhibition",
-            indications=["ACS", "MI prevention", "stroke prevention"],
-            contraindications=["active bleeding", "aspirin allergy", "severe liver disease"],
-            side_effects=["gastrointestinal bleeding", "nausea", "dyspepsia"],
-            drug_interactions=["warfarin", "clopidogrel", "ibuprofen"],
-            dosing_adult={
-                "loading": {"dose": 325, "unit": "mg", "route": "PO"},
-                "maintenance": {"dose": 81, "unit": "mg", "route": "PO", "frequency": "daily"}
-            },
-            dosing_pediatric={
-                "fever": {"dose": 10, "unit": "mg/kg", "route": "PO", "frequency": "q4-6h"}
-            },
-            description="Irreversible platelet inhibitor",
-            onset_time=30,
-            duration=1440,  # 24 hours
-            monitoring_required=["bleeding", "platelet_count"]
-        )
-            
-        # anticoagulants
-        medications["heparin"] = Medication(
-            name="Heparin",
-            category="Anticoagulant",
-            mechanism="Antithrombin III activation",
-            indications=["DVT", "PE", "ACS", "atrial fibrillation"],
-            contraindications=["active bleeding", "heparin allergy", "HIT"],
-            side_effects=["bleeding", "thrombocytopenia", "osteoporosis"],
-            drug_interactions=["aspirin", "clopidogrel", "warfarin"],
-            dosing_adult={
-                "loading": {"dose": 80, "unit": "units/kg", "route": "IV"},
-                "maintenance": {"dose": 18, "unit": "units/kg/hr", "route": "IV"}
-            },
-            dosing_pediatric={
-                "loading": {"dose": 75, "unit": "units/kg", "route": "IV"},
-                "maintenance": {"dose": 20, "unit": "units/kg/hr", "route": "IV"}
-            },
-            description="Unfractionated heparin for anticoagulation",
-            onset_time=5,
-            duration=60,
-            monitoring_required=["aPTT", "platelet_count", "HIT_antibodies"]
-        )
-        
-        medications["warfarin"] = Medication(
-            name="Warfarin",
-            category="Anticoagulant",
-            mechanism="Vitamin K antagonist",
-            indications=["DVT", "PE", "atrial fibrillation", "mechanical valves"],
-            contraindications=["active bleeding", "pregnancy", "severe liver disease"],
-            side_effects=["bleeding", "skin necrosis", "teratogenicity"],
-            drug_interactions=["aspirin", "amiodarone", "rifampin", "many_others"],
-            dosing_adult={
-                "loading": {"dose": 5, "unit": "mg", "route": "PO", "frequency": "daily"},
-                "maintenance": {"dose": 2.5, "unit": "mg", "route": "PO", "frequency": "daily"}
-            },
-            dosing_pediatric={
-                "loading": {"dose": 0.1, "unit": "mg/kg", "route": "PO", "frequency": "daily"},
-                "maintenance": {"dose": 0.05, "unit": "mg/kg", "route": "PO", "frequency": "daily"}
-            },
-            description="Oral anticoagulant requiring INR monitoring",
-            onset_time=1440,  # 24 hours
-            duration=4320,  # 72 hours
-            monitoring_required=["INR", "bleeding_signs"]
-        )
-        
-        # antiarrhythmics
-        medications["amiodarone"] = Medication(
-            name="Amiodarone",
-            category="Antiarrhythmic",
-            mechanism="Class III antiarrhythmic",
-            indications=["atrial fibrillation", "ventricular tachycardia", "cardiac arrest"],
-            contraindications=["severe bradycardia", "second/third degree heart block", "thyroid disease"],
-            side_effects=["pulmonary fibrosis", "thyroid dysfunction", "hepatotoxicity", "corneal deposits"],
-            drug_interactions=["warfarin", "digoxin", "many_others"],
-            dosing_adult={
-                "loading": {"dose": 150, "unit": "mg", "route": "IV", "frequency": "over 10 min"},
-                "maintenance": {"dose": 1, "unit": "mg/min", "route": "IV", "frequency": "for 6 hours"}
-            },
-            dosing_pediatric={
-                "loading": {"dose": 5, "unit": "mg/kg", "route": "IV", "frequency": "over 10 min"}
-            },
-            description="Potent antiarrhythmic with multiple organ toxicities",
-            onset_time=10,
-            duration=480,
-            monitoring_required=["ECG", "thyroid_function", "liver_function", "pulmonary_function"]
-        )
-        
-        # beta blockers
-        medications["metoprolol"] = Medication(
-            name="Metoprolol",
-            category="Beta Blocker",
-            mechanism="Selective beta-1 adrenergic blockade",
-            indications=["hypertension", "angina", "heart failure", "MI"],
-            contraindications=["severe bradycardia", "heart block", "cardiogenic shock", "asthma"],
-            side_effects=["bradycardia", "hypotension", "fatigue", "bronchospasm"],
-            drug_interactions=["amiodarone", "digoxin", "verapamil"],
-            dosing_adult={
-                "loading": {"dose": 5, "unit": "mg", "route": "IV", "frequency": "q5min x3"},
-                "maintenance": {"dose": 25, "unit": "mg", "route": "PO", "frequency": "bid"}
-            },
-            dosing_pediatric={
-                "loading": {"dose": 0.1, "unit": "mg/kg", "route": "IV", "frequency": "q5min x3"}
-            },
-            description="Cardioselective beta blocker",
-            onset_time=5,
-            duration=360,
-            monitoring_required=["heart_rate", "blood_pressure", "ECG"]
-        )
-        
-        # calcium channel blockers
-        medications["diltiazem"] = Medication(
-            name="Diltiazem",
-            category="Calcium Channel Blocker",
-            mechanism="Calcium channel blockade",
-            indications=["atrial fibrillation", "hypertension", "angina"],
-            contraindications=["severe bradycardia", "heart block", "cardiogenic shock"],
-            side_effects=["bradycardia", "hypotension", "constipation", "headache"],
-            drug_interactions=["amiodarone", "digoxin", "beta_blockers"],
-            dosing_adult={
-                "loading": {"dose": 0.25, "unit": "mg/kg", "route": "IV", "frequency": "over 2 min"},
-                "maintenance": {"dose": 5, "unit": "mg/hr", "route": "IV"}
-            },
-            dosing_pediatric={
-                "loading": {"dose": 0.25, "unit": "mg/kg", "route": "IV", "frequency": "over 2 min"}
-            },
-            description="Calcium channel blocker for rate control",
-            onset_time=3,
-            duration=240,
-            monitoring_required=["heart_rate", "blood_pressure", "ECG"]
-        )
-        
-        # vasodilators
-        medications["nitroglycerin"] = Medication(
+        # cardiovascular drugs
+        drugs["nitroglycerin"] = Drug(
             name="Nitroglycerin",
-            category="Vasodilator",
-            mechanism="Nitric oxide donor",
-            indications=["angina", "hypertension", "heart failure"],
-            contraindications=["severe hypotension", "right ventricular infarction", "viagra_use"],
+            category=DrugCategory.CARDIOVASCULAR,
+            routes=[Route.SUBLINGUAL, Route.INTRAVENOUS, Route.TOPICAL],
+            dosing_info={
+                "sublingual": {"dose": "0.4 mg", "frequency": "every 5 minutes", "max": "3 doses"},
+                "iv": {"dose": "5-200 mcg/min", "titration": "every 3-5 minutes"},
+                "topical": {"dose": "0.5-2 inches", "frequency": "every 8 hours"}
+            },
+            therapeutic_range=(0.1, 10.0),
+            unit="mcg/mL",
+            half_life=1.5,
+            contraindications=["hypotension", "right ventricular infarction"],
             side_effects=["headache", "hypotension", "reflex tachycardia"],
-            drug_interactions=["sildenafil", "tadalafil", "vardenafil"],
-            dosing_adult={
-                "sublingual": {"dose": 0.4, "unit": "mg", "route": "SL", "frequency": "q5min x3"},
-                "iv": {"dose": 10, "unit": "mcg/min", "route": "IV", "frequency": "titrate"}
-            },
-            dosing_pediatric={
-                "iv": {"dose": 0.5, "unit": "mcg/kg/min", "route": "IV", "frequency": "titrate"}
-            },
-            description="Potent vasodilator for acute coronary syndrome",
-            onset_time=1,
-            duration=30,
-            monitoring_required=["blood_pressure", "heart_rate", "chest_pain"]
+            monitoring_required=True,
+            cost_per_unit=2.0
         )
         
-        # diuretics
-        medications["furosemide"] = Medication(
-            name="Furosemide",
-            category="Diuretic",
-            mechanism="Loop diuretic",
-            indications=["heart failure", "pulmonary edema", "hypertension"],
-            contraindications=["anuria", "severe electrolyte depletion"],
-            side_effects=["hypokalemia", "dehydration", "ototoxicity"],
-            drug_interactions=["digoxin", "lithium", "aminoglycosides"],
-            dosing_adult={
-                "loading": {"dose": 40, "unit": "mg", "route": "IV", "frequency": "once"},
-                "maintenance": {"dose": 20, "unit": "mg", "route": "PO", "frequency": "daily"}
+        drugs["aspirin"] = Drug(
+            name="Aspirin",
+            category=DrugCategory.CARDIOVASCULAR,
+            routes=[Route.ORAL, Route.RECTAL],
+            dosing_info={
+                "oral": {"dose": "81-325 mg", "frequency": "daily"},
+                "rectal": {"dose": "300-600 mg", "frequency": "every 4-6 hours"}
             },
-            dosing_pediatric={
-                "loading": {"dose": 1, "unit": "mg/kg", "route": "IV", "frequency": "once"}
-            },
-            description="Loop diuretic for fluid overload",
-            onset_time=5,
-            duration=120,
-            monitoring_required=["electrolytes", "renal_function", "weight"]
+            contraindications=["bleeding disorder", "peptic ulcer disease", "allergy"],
+            side_effects=["gastrointestinal bleeding", "allergic reaction", "tinnitus"],
+            cost_per_unit=0.1
         )
         
-        # analgesics
-        medications["morphine"] = Medication(
-            name="Morphine",
-            category="Opioid Analgesic",
-            mechanism="Mu-opioid receptor agonist",
-            indications=["severe pain", "pulmonary edema", "end-of-life care"],
-            contraindications=["respiratory depression", "acute bronchial asthma", "paralytic ileus"],
-            side_effects=["respiratory depression", "sedation", "constipation", "nausea"],
-            drug_interactions=["benzodiazepines", "alcohol", "other_opioids"],
-            dosing_adult={
-                "loading": {"dose": 2, "unit": "mg", "route": "IV", "frequency": "q5-15min"},
-                "maintenance": {"dose": 0.1, "unit": "mg/kg", "route": "PO", "frequency": "q4h"}
+        drugs["metoprolol"] = Drug(
+            name="Metoprolol",
+            category=DrugCategory.CARDIOVASCULAR,
+            routes=[Route.ORAL, Route.INTRAVENOUS],
+            dosing_info={
+                "oral": {"dose": "25-100 mg", "frequency": "twice daily"},
+                "iv": {"dose": "5 mg", "frequency": "every 5 minutes", "max": "15 mg"}
             },
-            dosing_pediatric={
-                "loading": {"dose": 0.05, "unit": "mg/kg", "route": "IV", "frequency": "q5-15min"}
-            },
-            description="Potent opioid for severe pain",
-            onset_time=5,
-            duration=240,
-            monitoring_required=["respiratory_rate", "sedation_level", "pain_score"]
+            therapeutic_range=(50, 200),
+            unit="ng/mL",
+            half_life=3.5,
+            contraindications=["bradycardia", "heart block", "cardiogenic shock"],
+            side_effects=["bradycardia", "hypotension", "fatigue"],
+            monitoring_required=True,
+            cost_per_unit=0.5
         )
         
-        # antibiotics
-        medications["ceftriaxone"] = Medication(
-            name="Ceftriaxone",
-            category="Antibiotic",
-            mechanism="Third-generation cephalosporin",
-            indications=["pneumonia", "meningitis", "sepsis", "UTI"],
-            contraindications=["ceftriaxone allergy", "severe penicillin allergy"],
-            side_effects=["diarrhea", "allergic reactions", "gallbladder sludge"],
-            drug_interactions=["calcium_containing_solutions", "warfarin"],
-            dosing_adult={
-                "loading": {"dose": 1, "unit": "g", "route": "IV", "frequency": "daily"},
-                "maintenance": {"dose": 1, "unit": "g", "route": "IV", "frequency": "daily"}
-            },
-            dosing_pediatric={
-                "loading": {"dose": 50, "unit": "mg/kg", "route": "IV", "frequency": "daily"}
-            },
-            description="Broad-spectrum cephalosporin antibiotic",
-            onset_time=30,
-            duration=1440,
-            monitoring_required=["allergic_reactions", "renal_function"]
-        )
-        
-        # bronchodilators
-        medications["albuterol"] = Medication(
+        # respiratory drugs
+        drugs["albuterol"] = Drug(
             name="Albuterol",
-            category="Bronchodilator",
-            mechanism="Beta-2 adrenergic agonist",
-            indications=["asthma", "COPD", "bronchospasm"],
-            contraindications=["hypersensitivity", "uncontrolled arrhythmia"],
-            side_effects=["tachycardia", "tremor", "hypokalemia"],
-            drug_interactions=["beta_blockers", "diuretics"],
-            dosing_adult={
-                "nebulized": {"dose": 2.5, "unit": "mg", "route": "nebulizer", "frequency": "q20min x3"},
-                "inhaler": {"dose": 2, "unit": "puffs", "route": "inhaler", "frequency": "q4-6h"}
+            category=DrugCategory.BRONCHODILATOR,
+            routes=[Route.INHALED, Route.INTRAVENOUS],
+            dosing_info={
+                "inhaled": {"dose": "2 puffs", "frequency": "every 4-6 hours"},
+                "iv": {"dose": "0.5-10 mcg/min", "titration": "every 10-15 minutes"}
             },
-            dosing_pediatric={
-                "nebulized": {"dose": 0.15, "unit": "mg/kg", "route": "nebulizer", "frequency": "q20min x3"}
-            },
-            description="Short-acting beta-2 agonist for bronchospasm",
-            onset_time=5,
-            duration=240,
-            monitoring_required=["respiratory_rate", "oxygen_saturation", "heart_rate"]
+            contraindications=["hypersensitivity"],
+            side_effects=["tremor", "tachycardia", "hypokalemia"],
+            cost_per_unit=1.0
         )
         
-        # antiemetics
-        medications["ondansetron"] = Medication(
-            name="Ondansetron",
-            category="Antiemetic",
-            mechanism="5-HT3 receptor antagonist",
-            indications=["nausea", "vomiting", "chemotherapy-induced emesis"],
-            contraindications=["ondansetron allergy", "concurrent apomorphine"],
-            side_effects=["headache", "constipation", "QT prolongation"],
-            drug_interactions=["apomorphine", "tramadol"],
-            dosing_adult={
-                "loading": {"dose": 4, "unit": "mg", "route": "IV", "frequency": "once"},
-                "maintenance": {"dose": 8, "unit": "mg", "route": "PO", "frequency": "q8h"}
+        # analgesic drugs
+        drugs["morphine"] = Drug(
+            name="Morphine",
+            category=DrugCategory.ANALGESIC,
+            routes=[Route.INTRAVENOUS, Route.INTRAMUSCULAR, Route.ORAL],
+            dosing_info={
+                "iv": {"dose": "2-10 mg", "frequency": "every 2-4 hours"},
+                "im": {"dose": "5-15 mg", "frequency": "every 4 hours"},
+                "oral": {"dose": "15-30 mg", "frequency": "every 4 hours"}
             },
-            dosing_pediatric={
-                "loading": {"dose": 0.15, "unit": "mg/kg", "route": "IV", "frequency": "once"}
-            },
-            description="Serotonin antagonist for nausea and vomiting",
-            onset_time=15,
-            duration=480,
-            monitoring_required=["QT_interval", "nausea_vomiting"]
+            therapeutic_range=(10, 80),
+            unit="ng/mL",
+            half_life=2.0,
+            contraindications=["respiratory depression", "paralytic ileus"],
+            side_effects=["respiratory depression", "sedation", "constipation"],
+            monitoring_required=True,
+            cost_per_unit=5.0
         )
         
-        # antiplatelet agents
-        medications["clopidogrel"] = Medication(
-            name="Clopidogrel",
-            category="Antiplatelet",
-            mechanism="P2Y12 receptor antagonist",
-            indications=["ACS", "PCI", "stroke prevention"],
-            contraindications=["active bleeding", "clopidogrel allergy"],
-            side_effects=["bleeding", "thrombotic thrombocytopenic purpura"],
-            drug_interactions=["aspirin", "warfarin", "omeprazole"],
-            dosing_adult={
-                "loading": {"dose": 600, "unit": "mg", "route": "PO", "frequency": "once"},
-                "maintenance": {"dose": 75, "unit": "mg", "route": "PO", "frequency": "daily"}
-            },
-            dosing_pediatric={
-                "loading": {"dose": 1, "unit": "mg/kg", "route": "PO", "frequency": "once"}
-            },
-            description="P2Y12 inhibitor for antiplatelet therapy",
-            onset_time=60,
-            duration=1440,
-            monitoring_required=["bleeding", "platelet_function"]
-        )
-        
-        # ACE inhibitors
-        medications["lisinopril"] = Medication(
-            name="Lisinopril",
-            category="ACE Inhibitor",
-            mechanism="Angiotensin-converting enzyme inhibition",
-            indications=["hypertension", "heart failure", "MI", "diabetic nephropathy"],
-            contraindications=["angioedema", "pregnancy", "bilateral renal artery stenosis"],
-            side_effects=["cough", "hyperkalemia", "angioedema", "renal dysfunction"],
-            drug_interactions=["lithium", "potassium_sparing_diuretics", "NSAIDs"],
-            dosing_adult={
-                "loading": {"dose": 5, "unit": "mg", "route": "PO", "frequency": "daily"},
-                "maintenance": {"dose": 10, "unit": "mg", "route": "PO", "frequency": "daily"}
-            },
-            dosing_pediatric={
-                "loading": {"dose": 0.07, "unit": "mg/kg", "route": "PO", "frequency": "daily"}
-            },
-            description="ACE inhibitor for cardiovascular protection",
-            onset_time=60,
-            duration=1440,
-            monitoring_required=["blood_pressure", "renal_function", "potassium"]
-        )
-        
-        # statins
-        medications["atorvastatin"] = Medication(
-            name="Atorvastatin",
-            category="Statin",
-            mechanism="HMG-CoA reductase inhibition",
-            indications=["hyperlipidemia", "cardiovascular risk reduction"],
-            contraindications=["active liver disease", "pregnancy", "lactation"],
-            side_effects=["myalgia", "hepatotoxicity", "rhabdomyolysis"],
-            drug_interactions=["amiodarone", "verapamil", "gemfibrozil"],
-            dosing_adult={
-                "loading": {"dose": 10, "unit": "mg", "route": "PO", "frequency": "daily"},
-                "maintenance": {"dose": 20, "unit": "mg", "route": "PO", "frequency": "daily"}
-            },
-            dosing_pediatric={
-                "loading": {"dose": 10, "unit": "mg", "route": "PO", "frequency": "daily"}
-            },
-            description="HMG-CoA reductase inhibitor for lipid management",
-            onset_time=1440,
-            duration=1440,
-            monitoring_required=["liver_function", "creatine_kinase", "lipid_panel"]
-        )
-        
-        # Additional medications for comprehensive formulary
-        medications["acetaminophen"] = Medication(
+        drugs["acetaminophen"] = Drug(
             name="Acetaminophen",
-            category="Analgesic",
-            mechanism="COX-2 inhibition",
-            indications=["pain", "fever"],
-            contraindications=["severe liver disease", "acetaminophen allergy"],
-            side_effects=["hepatotoxicity", "allergic reaction", "overdose risk"],
-            drug_interactions=["warfarin", "alcohol"],
-            dosing_adult={
-                "loading": {"dose": 650, "unit": "mg", "route": "PO", "frequency": "q4-6h"},
-                "maintenance": {"dose": 1000, "unit": "mg", "route": "PO", "frequency": "q6h"}
+            category=DrugCategory.ANALGESIC,
+            routes=[Route.ORAL, Route.RECTAL],
+            dosing_info={
+                "oral": {"dose": "500-1000 mg", "frequency": "every 4-6 hours", "max": "4000 mg/day"},
+                "rectal": {"dose": "325-650 mg", "frequency": "every 4-6 hours"}
             },
-            dosing_pediatric={
-                "loading": {"dose": 15, "unit": "mg/kg", "route": "PO", "frequency": "q4-6h"}
-            },
-            dosage_forms=["PO"],
-            description="Non-opioid analgesic and antipyretic",
-            onset_time=30,
-            duration=240,
-            monitoring_required=["liver_function", "overdose_signs"]
+            therapeutic_range=(10, 30),
+            unit="mcg/mL",
+            half_life=2.0,
+            contraindications=["liver disease", "alcoholism"],
+            side_effects=["hepatotoxicity", "allergic reaction"],
+            cost_per_unit=0.2
         )
         
-        medications["ibuprofen"] = Medication(
-            name="Ibuprofen",
-            category="NSAID",
-            mechanism="COX-1 and COX-2 inhibition",
-            indications=["pain", "inflammation", "fever"],
-            contraindications=["active peptic ulcer", "severe renal disease", "aspirin allergy"],
-            side_effects=["gastrointestinal bleeding", "renal dysfunction", "hypertension"],
-            drug_interactions=["aspirin", "warfarin", "ace_inhibitors"],
-            dosing_adult={
-                "loading": {"dose": 400, "unit": "mg", "route": "PO", "frequency": "q6-8h"},
-                "maintenance": {"dose": 600, "unit": "mg", "route": "PO", "frequency": "q6-8h"}
+        # antibiotic drugs
+        drugs["ceftriaxone"] = Drug(
+            name="Ceftriaxone",
+            category=DrugCategory.ANTIBIOTIC,
+            routes=[Route.INTRAVENOUS, Route.INTRAMUSCULAR],
+            dosing_info={
+                "iv": {"dose": "1-2 g", "frequency": "every 12-24 hours"},
+                "im": {"dose": "1-2 g", "frequency": "every 12-24 hours"}
             },
-            dosing_pediatric={
-                "loading": {"dose": 10, "unit": "mg/kg", "route": "PO", "frequency": "q6-8h"}
-            },
-            dosage_forms=["PO"],
-            description="Non-steroidal anti-inflammatory drug",
-            onset_time=30,
-            duration=360,
-            monitoring_required=["renal_function", "gastrointestinal_symptoms"]
+            contraindications=["penicillin allergy"],
+            side_effects=["diarrhea", "allergic reaction", "phlebitis"],
+            cost_per_unit=15.0
         )
         
-        medications["digoxin"] = Medication(
-            name="Digoxin",
-            category="Cardiac Glycoside",
-            mechanism="Na+/K+ ATPase inhibition",
-            indications=["heart failure", "atrial fibrillation"],
-            contraindications=["severe bradycardia", "heart block", "digitalis toxicity"],
-            side_effects=["bradycardia", "arrhythmias", "nausea", "visual changes"],
-            drug_interactions=["amiodarone", "verapamil", "diuretics"],
-            dosing_adult={
-                "loading": {"dose": 0.5, "unit": "mg", "route": "PO", "frequency": "q8h x3"},
-                "maintenance": {"dose": 0.125, "unit": "mg", "route": "PO", "frequency": "daily"}
+        # anticoagulant drugs
+        drugs["heparin"] = Drug(
+            name="Heparin",
+            category=DrugCategory.ANTICOAGULANT,
+            routes=[Route.INTRAVENOUS, Route.SUBCUTANEOUS],
+            dosing_info={
+                "iv": {"dose": "80 units/kg bolus", "maintenance": "18 units/kg/hour"},
+                "sc": {"dose": "5000-10000 units", "frequency": "every 8-12 hours"}
             },
-            dosing_pediatric={
-                "loading": {"dose": 0.01, "unit": "mg/kg", "route": "PO", "frequency": "q8h x3"}
-            },
-            dosage_forms=["PO"],
-            description="Cardiac glycoside for heart failure and rate control",
-            onset_time=60,
-            duration=1440,
-            monitoring_required=["digoxin_level", "ECG", "renal_function"]
+            therapeutic_range=(0.3, 0.7),
+            unit="units/mL",
+            half_life=1.5,
+            contraindications=["active bleeding", "heparin-induced thrombocytopenia"],
+            side_effects=["bleeding", "thrombocytopenia", "osteoporosis"],
+            monitoring_required=True,
+            cost_per_unit=8.0
         )
         
-        medications["insulin_regular"] = Medication(
+        # insulin
+        drugs["insulin_regular"] = Drug(
             name="Insulin Regular",
-            category="Insulin",
-            mechanism="Glucose transport and metabolism",
-            indications=["diabetes", "hyperglycemia", "diabetic ketoacidosis"],
-            contraindications=["hypoglycemia", "insulin allergy"],
-            side_effects=["hypoglycemia", "weight gain", "injection site reactions"],
-            drug_interactions=["corticosteroids", "beta_blockers", "thiazide_diuretics"],
-            dosing_adult={
-                "loading": {"dose": 10, "unit": "units", "route": "SC", "frequency": "as needed"},
-                "maintenance": {"dose": 0.5, "unit": "units/kg/day", "route": "SC", "frequency": "divided doses"}
+            category=DrugCategory.INSULIN,
+            routes=[Route.SUBCUTANEOUS, Route.INTRAVENOUS],
+            dosing_info={
+                "sc": {"dose": "0.1-1.0 units/kg", "frequency": "before meals"},
+                "iv": {"dose": "0.1 units/kg/hour", "titration": "based on glucose"}
             },
-            dosing_pediatric={
-                "loading": {"dose": 0.5, "unit": "units/kg", "route": "SC", "frequency": "as needed"}
-            },
-            dosage_forms=["SC"],
-            description="Short-acting human insulin",
-            onset_time=30,
-            duration=360,
-            monitoring_required=["blood_glucose", "hypoglycemia_signs"]
+            therapeutic_range=(70, 140),
+            unit="mg/dL (glucose)",
+            half_life=1.0,
+            contraindications=["hypoglycemia"],
+            side_effects=["hypoglycemia", "weight gain"],
+            monitoring_required=True,
+            cost_per_unit=2.0
         )
-        # End of medication definitions
-        return medications
-    
-    def get_available_medications(self) -> List[str]:
-        """get list of available medications"""
-        return list(self.medications.keys())
-    
-    def get_medication_info(self, medication_name: str) -> Optional[Medication]:
-        """get detailed information about a medication"""
-        return self.medications.get(medication_name)
-    
-    def administer_medication(self, patient_id: str, medication_name: str, dose: str, route: str) -> Dict[str, Any]:
-        """administer a medication to a patient"""
-        if medication_name not in self.medications:
-            return {"success": False, "error": "medication not found"}
         
-        medication = self.medications[medication_name]
+        return drugs
+    
+    def _initialize_interactions(self) -> List[DrugInteraction]:
+        """initialize drug interaction database"""
+        interactions = []
         
-        # check if route is available
-        if route not in medication.dosage_forms:
-            return {"success": False, "error": f"route {route} not available for {medication_name}"}
+        # aspirin interactions
+        interactions.append(DrugInteraction(
+            drug1="aspirin",
+            drug2="heparin",
+            severity=InteractionSeverity.MODERATE,
+            mechanism="Increased bleeding risk",
+            effect="Enhanced anticoagulation",
+            recommendation="Monitor bleeding parameters closely"
+        ))
         
-        # create treatment record
-        treatment = {
-            'medication_name': medication_name,
+        interactions.append(DrugInteraction(
+            drug1="aspirin",
+            drug2="metoprolol",
+            severity=InteractionSeverity.MILD,
+            mechanism="No direct interaction",
+            effect="May be used together safely",
+            recommendation="Monitor for additive cardiovascular effects"
+        ))
+        
+        # nitroglycerin interactions
+        interactions.append(DrugInteraction(
+            drug1="nitroglycerin",
+            drug2="sildenafil",
+            severity=InteractionSeverity.CONTRAINDICATED,
+            mechanism="Enhanced vasodilation",
+            effect="Severe hypotension",
+            recommendation="Contraindicated - avoid combination"
+        ))
+        
+        # morphine interactions
+        interactions.append(DrugInteraction(
+            drug1="morphine",
+            drug2="alcohol",
+            severity=InteractionSeverity.SEVERE,
+            mechanism="Enhanced CNS depression",
+            effect="Increased sedation and respiratory depression",
+            recommendation="Avoid alcohol while taking morphine"
+        ))
+        
+        interactions.append(DrugInteraction(
+            drug1="morphine",
+            drug2="metoprolol",
+            severity=InteractionSeverity.MILD,
+            mechanism="No significant interaction",
+            effect="May be used together",
+            recommendation="Monitor for additive effects"
+        ))
+        
+        return interactions
+    
+    def _initialize_protocols(self) -> Dict[str, TreatmentProtocol]:
+        """initialize treatment protocols"""
+        protocols = {}
+        
+        # chest pain protocol
+        protocols["chest_pain"] = TreatmentProtocol(
+            name="Chest Pain Protocol",
+            condition="Acute chest pain",
+            description="Standard protocol for evaluation and treatment of chest pain",
+            steps=[
+                {"action": "ECG", "time": 0, "description": "Immediate 12-lead ECG"},
+                {"action": "Aspirin", "time": 5, "description": "325 mg aspirin PO"},
+                {"action": "Nitroglycerin", "time": 10, "description": "0.4 mg SL, repeat x2 if needed"},
+                {"action": "Morphine", "time": 15, "description": "2-4 mg IV if pain persists"},
+                {"action": "Heparin", "time": 20, "description": "80 units/kg bolus + 18 units/kg/hour"}
+            ],
+            evidence_level="high",
+            success_rate=0.85,
+            duration=2,
+            cost=500.0,
+            complications=["bleeding", "allergic reaction", "hypotension"]
+        )
+        
+        # asthma exacerbation protocol
+        protocols["asthma_exacerbation"] = TreatmentProtocol(
+            name="Asthma Exacerbation Protocol",
+            condition="Acute asthma exacerbation",
+            description="Standard protocol for treatment of asthma exacerbation",
+            steps=[
+                {"action": "Albuterol", "time": 0, "description": "2 puffs inhaled"},
+                {"action": "Oxygen", "time": 5, "description": "2-4 L/min via nasal cannula"},
+                {"action": "Prednisone", "time": 10, "description": "40-60 mg PO"},
+                {"action": "Ipratropium", "time": 15, "description": "2 puffs inhaled"}
+            ],
+            evidence_level="high",
+            success_rate=0.90,
+            duration=4,
+            cost=200.0,
+            complications=["tremor", "tachycardia", "hyperglycemia"]
+        )
+        
+        # sepsis protocol
+        protocols["sepsis"] = TreatmentProtocol(
+            name="Sepsis Protocol",
+            condition="Severe sepsis/septic shock",
+            description="Surviving Sepsis Campaign guidelines",
+            steps=[
+                {"action": "Ceftriaxone", "time": 0, "description": "2 g IV"},
+                {"action": "Fluids", "time": 5, "description": "30 mL/kg crystalloid"},
+                {"action": "Vasopressor", "time": 30, "description": "Norepinephrine if needed"},
+                {"action": "Corticosteroids", "time": 60, "description": "Hydrocortisone if indicated"}
+            ],
+            evidence_level="high",
+            success_rate=0.75,
+            duration=6,
+            cost=1000.0,
+            complications=["allergic reaction", "adrenal insufficiency", "arrhythmia"]
+        )
+        
+        return protocols
+    
+    def administer_drug(self, patient_id: str, drug_name: str, dose: float, 
+                       route: str, timestamp: datetime = None) -> str:
+        """administer a drug to a patient"""
+        if drug_name not in self.drugs:
+            return f"Error: Drug '{drug_name}' not found"
+        
+        drug = self.drugs[drug_name]
+        route_enum = Route(route.lower())
+        
+        if route_enum not in drug.routes:
+            return f"Error: Route '{route}' not available for {drug_name}"
+        
+        # check for drug interactions
+        interactions = self._check_drug_interactions(patient_id, drug_name)
+        if interactions:
+            interaction_warnings = []
+            for interaction in interactions:
+                if interaction.severity in [InteractionSeverity.SEVERE, InteractionSeverity.CONTRAINDICATED]:
+                    interaction_warnings.append(f"CRITICAL: {interaction.effect}")
+                else:
+                    interaction_warnings.append(f"Warning: {interaction.effect}")
+        
+        # record administration
+        administration = {
+            'drug_name': drug_name,
             'dose': dose,
             'route': route,
-            'administered_at': datetime.now().isoformat(),
-            'effects': medication.effects.copy(),
-            'side_effects': medication.side_effects.copy()
+            'timestamp': timestamp or datetime.now(),
+            'category': drug.category.value,
+            'interactions': interactions if interactions else []
         }
         
-        # add to active treatments
         if patient_id not in self.active_treatments:
             self.active_treatments[patient_id] = []
         
-        self.active_treatments[patient_id].append(treatment)
+        self.active_treatments[patient_id].append(administration)
         
-        return {
-            "success": True,
-            "medication": medication_name,
-            "dose": dose,
-            "route": route,
-            "cost": medication.cost,
-            "effects": medication.effects,
-            "side_effects": medication.side_effects
-        }
+        # initialize drug level monitoring if required
+        if drug.monitoring_required:
+            if patient_id not in self.drug_levels:
+                self.drug_levels[patient_id] = []
+            
+            # simulate initial drug level
+            initial_level = random.uniform(drug.therapeutic_range[0], drug.therapeutic_range[1]) if drug.therapeutic_range else 0.0
+            
+            drug_level = DrugLevel(
+                drug_name=drug_name,
+                current_level=initial_level,
+                therapeutic_range=drug.therapeutic_range or (0.0, 0.0),
+                unit=drug.unit,
+                timestamp=timestamp or datetime.now(),
+                half_life=drug.half_life,
+                clearance_rate=random.uniform(0.5, 2.0)
+            )
+            
+            self.drug_levels[patient_id].append(drug_level)
+        
+        result = f"✓ Administered {dose} {drug_name} via {route}"
+        if interactions:
+            result += f"\n⚠️ Drug interactions detected: {', '.join(interaction_warnings)}"
+        
+        return result
+    
+    def _check_drug_interactions(self, patient_id: str, new_drug: str) -> List[DrugInteraction]:
+        """check for drug interactions with currently active drugs"""
+        interactions = []
+        
+        if patient_id in self.active_treatments:
+            active_drugs = [treatment['drug_name'] for treatment in self.active_treatments[patient_id]]
+            
+            for interaction in self.interactions:
+                if ((interaction.drug1 == new_drug and interaction.drug2 in active_drugs) or
+                    (interaction.drug2 == new_drug and interaction.drug1 in active_drugs)):
+                    interactions.append(interaction)
+        
+        return interactions
     
     def get_active_treatments(self, patient_id: str) -> List[Dict[str, Any]]:
         """get active treatments for a patient"""
         return self.active_treatments.get(patient_id, [])
     
-    def get_medication_effects(self, patient_id: str) -> Dict[str, Any]:
-        """get cumulative medication effects for a patient"""
-        if patient_id not in self.active_treatments:
-            return {}
-        
-        cumulative_effects = {}
-        for treatment in self.active_treatments[patient_id]:
-            for effect, value in treatment['effects'].items():
-                if effect in cumulative_effects:
-                    # combine effects (simplified logic)
-                    if isinstance(value, bool):
-                        cumulative_effects[effect] = cumulative_effects[effect] or value
-                    elif isinstance(value, (int, float)):
-                        cumulative_effects[effect] = cumulative_effects[effect] + value
-                else:
-                    cumulative_effects[effect] = value
-        
-        return cumulative_effects
+    def get_drug_levels(self, patient_id: str) -> List[DrugLevel]:
+        """get drug levels for a patient"""
+        return self.drug_levels.get(patient_id, [])
     
-    def search_medications(self, category: str = None, route: str = None) -> List[str]:
-        """search medications by category or route"""
-        results = []
+    def update_drug_levels(self, patient_id: str, current_time: datetime = None) -> List[str]:
+        """update drug levels based on pharmacokinetics"""
+        if current_time is None:
+            current_time = datetime.now()
         
-        for name, medication in self.medications.items():
-            if category and medication.category.lower() != category.lower():
-                continue
-            if route and route not in medication.dosage_forms:
-                continue
-            results.append(name)
+        updates = []
         
+        if patient_id in self.drug_levels:
+            for drug_level in self.drug_levels[patient_id]:
+                # calculate time elapsed
+                time_elapsed = (current_time - drug_level.timestamp).total_seconds() / 3600  # hours
+                
+                # calculate new level based on half-life
+                if drug_level.half_life > 0:
+                    decay_factor = math.exp(-time_elapsed * math.log(2) / drug_level.half_life)
+                    new_level = drug_level.current_level * decay_factor
+                    
+                    if new_level != drug_level.current_level:
+                        old_level = drug_level.current_level
+                        drug_level.current_level = new_level
+                        drug_level.timestamp = current_time
+                        
+                        # update therapeutic status
+                        if drug_level.therapeutic_range:
+                            drug_level.is_therapeutic = (drug_level.therapeutic_range[0] <= new_level <= drug_level.therapeutic_range[1])
+                            drug_level.is_toxic = new_level > drug_level.therapeutic_range[1]
+                        
+                        updates.append(f"Drug level {drug_level.drug_name}: {old_level:.2f} → {new_level:.2f}")
+        
+        return updates
+    
+    def start_treatment_protocol(self, patient_id: str, protocol_name: str) -> str:
+        """start a treatment protocol for a patient"""
+        if protocol_name not in self.protocols:
+            return f"Error: Protocol '{protocol_name}' not found"
+        
+        protocol = self.protocols[protocol_name]
+        
+        session = TreatmentSession(
+            patient_id=patient_id,
+            start_time=datetime.now(),
+            protocols_used=[protocol_name]
+        )
+        
+        self.treatment_sessions.append(session)
+        
+        return f"✓ Started {protocol_name} protocol for patient {patient_id}"
+    
+    def get_available_drugs(self) -> Dict[str, Drug]:
+        """get all available drugs"""
+        return self.drugs.copy()
+    
+    def get_available_protocols(self) -> Dict[str, TreatmentProtocol]:
+        """get all available protocols"""
+        return self.protocols.copy()
+    
+    def search_drugs(self, query: str) -> Dict[str, Drug]:
+        """search drugs by name or category"""
+        query = query.lower()
+        results = {}
+        for name, drug in self.drugs.items():
+            if (query in name.lower() or 
+                query in drug.category.value.lower()):
+                results[name] = drug
         return results
     
-    def get_medication_categories(self) -> List[str]:
-        """get all medication categories"""
-        categories = set()
-        for medication in self.medications.values():
-            categories.add(medication.category)
-        return list(categories)
+    def get_drug_interactions(self, drug_name: str) -> List[DrugInteraction]:
+        """get all interactions for a specific drug"""
+        interactions = []
+        for interaction in self.interactions:
+            if interaction.drug1 == drug_name or interaction.drug2 == drug_name:
+                interactions.append(interaction)
+        return interactions
     
-    def get_medication_by_category(self, category: str) -> List[str]:
-        """get medications by category"""
-        return [name for name, med in self.medications.items() 
-                if med.category.lower() == category.lower()]
-    
-    def check_contraindications(self, medication_name: str, patient_conditions: List[str]) -> List[str]:
-        """check for contraindications"""
-        if medication_name not in self.medications:
-            return ["medication not found"]
+    def get_critical_alerts(self) -> List[Dict[str, Any]]:
+        """get critical drug alerts"""
+        alerts = []
         
-        medication = self.medications[medication_name]
-        contraindications = []
+        for patient_id, drug_levels in self.drug_levels.items():
+            for drug_level in drug_levels:
+                if drug_level.is_toxic or not drug_level.is_therapeutic:
+                    alerts.append({
+                        'patient_id': patient_id,
+                        'drug_name': drug_level.drug_name,
+                        'level': drug_level.current_level,
+                        'unit': drug_level.unit,
+                        'therapeutic_range': drug_level.therapeutic_range,
+                        'status': 'toxic' if drug_level.is_toxic else 'subtherapeutic',
+                        'timestamp': drug_level.timestamp
+                    })
         
-        for condition in patient_conditions:
-            if condition.lower() in [c.lower() for c in medication.contraindications]:
-                contraindications.append(condition)
-        
-        return contraindications 
+        return alerts 

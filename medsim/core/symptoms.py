@@ -1,10 +1,12 @@
 """
-comprehensive symptoms library for medical simulation
+comprehensive symptoms library for medical simulation with realistic discovery patterns
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
+from datetime import datetime, timedelta
+import random
 
 
 class SymptomSeverity(Enum):
@@ -28,11 +30,38 @@ class SymptomCategory(Enum):
     HEMATOLOGICAL = "hematological"
     PSYCHIATRIC = "psychiatric"
     GENERAL = "general"
+    CONSTITUTIONAL = "constitutional"
+
+
+class DiscoveryMethod(Enum):
+    """how symptoms are discovered"""
+    PATIENT_REPORTED = "patient_reported"
+    PHYSICAL_EXAM = "physical_exam"
+    VITAL_SIGNS = "vital_signs"
+    LAB_RESULTS = "lab_results"
+    IMAGING = "imaging"
+    OBSERVATION = "observation"
+    SPECIALIZED_TEST = "specialized_test"
+
+
+@dataclass
+class SymptomProgression:
+    """symptom progression over time"""
+    onset_time: datetime
+    initial_severity: SymptomSeverity
+    current_severity: SymptomSeverity
+    progression_rate: float  # severity change per hour
+    triggers: List[str] = field(default_factory=list)
+    relieving_factors: List[str] = field(default_factory=list)
+    associated_symptoms: List[str] = field(default_factory=list)
+    discovered_by: List[DiscoveryMethod] = field(default_factory=list)
+    discovery_time: Optional[datetime] = None
+    notes: List[str] = field(default_factory=list)
 
 
 @dataclass
 class Symptom:
-    """symptom definition"""
+    """symptom definition with realistic discovery patterns"""
     name: str
     category: SymptomCategory
     description: str
@@ -45,16 +74,38 @@ class Symptom:
     aggravating_factors: List[str] = field(default_factory=list)
     relieving_factors: List[str] = field(default_factory=list)
     associated_symptoms: List[str] = field(default_factory=list)
+    
+    # discovery patterns
+    discovery_methods: List[DiscoveryMethod] = field(default_factory=list)
+    discovery_difficulty: float = 1.0  # 0.0 = obvious, 1.0 = very subtle
+    requires_specific_exam: bool = False
+    requires_lab_confirmation: bool = False
+    requires_imaging: bool = False
+    
+    # temporal patterns
+    typical_onset: str = "variable"  # sudden, gradual, intermittent
+    progression_pattern: str = "variable"  # worsening, improving, fluctuating
+    time_to_peak: Optional[int] = None  # hours to peak severity
+    
+    # physical exam findings
+    exam_findings: Dict[str, str] = field(default_factory=dict)
+    vital_sign_changes: Dict[str, Tuple[float, float]] = field(default_factory=dict)
+    
+    # lab/imaging correlates
+    lab_correlates: List[str] = field(default_factory=list)
+    imaging_correlates: List[str] = field(default_factory=list)
 
 
 class ComprehensiveSymptomLibrary:
-    """comprehensive library of medical symptoms"""
+    """comprehensive library of medical symptoms with realistic discovery patterns"""
     
     def __init__(self):
         self.symptoms = self._initialize_symptoms()
+        self.active_symptoms: Dict[str, SymptomProgression] = {}
+        self.discovery_history: List[Dict[str, Any]] = []
     
     def _initialize_symptoms(self) -> Dict[str, Symptom]:
-        """initialize comprehensive symptom library"""
+        """initialize comprehensive symptom library with realistic discovery patterns"""
         symptoms = {}
         
         # cardiovascular symptoms
@@ -70,7 +121,25 @@ class ComprehensiveSymptomLibrary:
             typical_duration="variable",
             aggravating_factors=["exertion", "stress", "cold weather"],
             relieving_factors=["rest", "nitroglycerin", "antacids"],
-            associated_symptoms=["shortness of breath", "nausea", "sweating", "dizziness"]
+            associated_symptoms=["shortness of breath", "nausea", "sweating", "dizziness"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.2,  # usually obvious
+            requires_specific_exam=True,
+            typical_onset="sudden",
+            progression_pattern="worsening",
+            time_to_peak=2,
+            exam_findings={
+                "chest_tenderness": "may be present in costochondritis",
+                "heart_sounds": "may have S3, S4, or murmurs",
+                "pulses": "may be diminished in dissection"
+            },
+            vital_sign_changes={
+                "heart_rate": (10, 30),
+                "blood_pressure": (10, 40),
+                "respiratory_rate": (5, 15)
+            },
+            lab_correlates=["troponin", "ck_mb", "bnp"],
+            imaging_correlates=["chest_xray", "chest_ct", "coronary_angiogram"]
         )
         
         symptoms["shortness_of_breath"] = Symptom(
@@ -85,7 +154,25 @@ class ComprehensiveSymptomLibrary:
             typical_duration="variable",
             aggravating_factors=["exertion", "lying flat", "exposure to triggers"],
             relieving_factors=["rest", "upright position", "bronchodilators"],
-            associated_symptoms=["chest pain", "cough", "fatigue", "anxiety"]
+            associated_symptoms=["chest pain", "cough", "fatigue", "anxiety"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.OBSERVATION, DiscoveryMethod.VITAL_SIGNS],
+            discovery_difficulty=0.3,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="worsening",
+            exam_findings={
+                "respiratory_rate": "tachypnea",
+                "oxygen_saturation": "may be decreased",
+                "lung_sounds": "may have crackles, wheezes, or diminished breath sounds",
+                "accessory_muscle_use": "may be present"
+            },
+            vital_sign_changes={
+                "respiratory_rate": (5, 20),
+                "oxygen_saturation": (-5, -15),
+                "heart_rate": (10, 25)
+            },
+            lab_correlates=["abg", "bicarbonate"],
+            imaging_correlates=["chest_xray", "chest_ct", "vq_scan"]
         )
         
         symptoms["palpitations"] = Symptom(
@@ -100,7 +187,23 @@ class ComprehensiveSymptomLibrary:
             typical_duration="minutes to hours",
             aggravating_factors=["stress", "caffeine", "alcohol"],
             relieving_factors=["rest", "vagal maneuvers"],
-            associated_symptoms=["anxiety", "chest pain", "dizziness"]
+            associated_symptoms=["anxiety", "chest pain", "dizziness"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.VITAL_SIGNS],
+            discovery_difficulty=0.4,
+            requires_specific_exam=True,
+            typical_onset="sudden",
+            progression_pattern="fluctuating",
+            exam_findings={
+                "heart_rate": "may be irregular or rapid",
+                "pulse": "may be irregular",
+                "blood_pressure": "may be variable"
+            },
+            vital_sign_changes={
+                "heart_rate": (20, 60),
+                "blood_pressure": (5, 20)
+            },
+            lab_correlates=["electrolytes", "thyroid_function"],
+            imaging_correlates=["ecg", "holter_monitor"]
         )
         
         symptoms["syncope"] = Symptom(
@@ -115,7 +218,23 @@ class ComprehensiveSymptomLibrary:
             typical_duration="seconds to minutes",
             aggravating_factors=["prolonged standing", "dehydration", "pain"],
             relieving_factors=["lying down", "hydration"],
-            associated_symptoms=["dizziness", "nausea", "sweating", "palpitations"]
+            associated_symptoms=["dizziness", "nausea", "sweating", "palpitations"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.OBSERVATION],
+            discovery_difficulty=0.1,  # very obvious
+            requires_specific_exam=True,
+            typical_onset="sudden",
+            progression_pattern="sudden",
+            exam_findings={
+                "orthostatic_vitals": "may show significant drop",
+                "neurological_exam": "should be normal after recovery",
+                "cardiac_exam": "may reveal arrhythmia"
+            },
+            vital_sign_changes={
+                "blood_pressure": (20, 50),
+                "heart_rate": (10, 40)
+            },
+            lab_correlates=["electrolytes", "glucose", "cardiac_enzymes"],
+            imaging_correlates=["ecg", "head_ct", "carotid_doppler"]
         )
         
         # respiratory symptoms
@@ -131,7 +250,22 @@ class ComprehensiveSymptomLibrary:
             typical_duration="days to weeks",
             aggravating_factors=["cold air", "allergens", "lying down"],
             relieving_factors=["humidifier", "cough suppressants", "treating underlying cause"],
-            associated_symptoms=["sore throat", "runny nose", "fever", "fatigue"]
+            associated_symptoms=["sore throat", "runny nose", "fever", "fatigue"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.OBSERVATION],
+            discovery_difficulty=0.1,
+            requires_specific_exam=False,
+            typical_onset="gradual",
+            progression_pattern="variable",
+            exam_findings={
+                "lung_sounds": "may have crackles, wheezes, or normal",
+                "throat": "may be erythematous",
+                "lymph_nodes": "may be enlarged"
+            },
+            vital_sign_changes={
+                "respiratory_rate": (2, 8)
+            },
+            lab_correlates=["cbc", "sputum_culture"],
+            imaging_correlates=["chest_xray"]
         )
         
         symptoms["wheezing"] = Symptom(
@@ -146,7 +280,24 @@ class ComprehensiveSymptomLibrary:
             typical_duration="variable",
             aggravating_factors=["allergens", "exercise", "cold air", "respiratory infections"],
             relieving_factors=["bronchodilators", "steroids", "avoiding triggers"],
-            associated_symptoms=["shortness of breath", "cough", "chest tightness"]
+            associated_symptoms=["shortness of breath", "cough", "chest tightness"],
+            discovery_methods=[DiscoveryMethod.PHYSICAL_EXAM, DiscoveryMethod.PATIENT_REPORTED],
+            discovery_difficulty=0.3,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="worsening",
+            exam_findings={
+                "lung_sounds": "wheezes on auscultation",
+                "respiratory_rate": "may be increased",
+                "accessory_muscle_use": "may be present",
+                "oxygen_saturation": "may be decreased"
+            },
+            vital_sign_changes={
+                "respiratory_rate": (5, 15),
+                "oxygen_saturation": (-3, -10)
+            },
+            lab_correlates=["peak_flow", "pulmonary_function"],
+            imaging_correlates=["chest_xray"]
         )
         
         # gastrointestinal symptoms
@@ -162,7 +313,24 @@ class ComprehensiveSymptomLibrary:
             typical_duration="variable",
             aggravating_factors=["eating", "movement", "stress"],
             relieving_factors=["rest", "heat", "antacids"],
-            associated_symptoms=["nausea", "vomiting", "diarrhea", "constipation"]
+            associated_symptoms=["nausea", "vomiting", "diarrhea", "constipation"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.2,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="worsening",
+            exam_findings={
+                "tenderness": "localized or diffuse",
+                "guarding": "may be present",
+                "rebound": "may be present",
+                "bowel_sounds": "may be increased or decreased"
+            },
+            vital_sign_changes={
+                "heart_rate": (5, 20),
+                "blood_pressure": (5, 15)
+            },
+            lab_correlates=["cbc", "amylase", "lipase", "liver_function"],
+            imaging_correlates=["abdominal_ct", "abdominal_ultrasound"]
         )
         
         symptoms["nausea"] = Symptom(
@@ -177,7 +345,21 @@ class ComprehensiveSymptomLibrary:
             typical_duration="hours to days",
             aggravating_factors=["strong odors", "certain foods", "motion"],
             relieving_factors=["rest", "small meals", "antiemetics"],
-            associated_symptoms=["vomiting", "abdominal pain", "dizziness", "sweating"]
+            associated_symptoms=["vomiting", "abdominal pain", "dizziness", "sweating"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED],
+            discovery_difficulty=0.1,
+            requires_specific_exam=False,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "abdomen": "may be tender",
+                "dehydration": "may be present"
+            },
+            vital_sign_changes={
+                "heart_rate": (5, 15)
+            },
+            lab_correlates=["electrolytes", "pregnancy_test"],
+            imaging_correlates=[]
         )
         
         symptoms["vomiting"] = Symptom(
@@ -192,7 +374,22 @@ class ComprehensiveSymptomLibrary:
             typical_duration="hours to days",
             aggravating_factors=["certain foods", "motion", "strong odors"],
             relieving_factors=["rest", "hydration", "antiemetics"],
-            associated_symptoms=["nausea", "abdominal pain", "dehydration", "weakness"]
+            associated_symptoms=["nausea", "abdominal pain", "dehydration", "weakness"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.OBSERVATION],
+            discovery_difficulty=0.1,
+            requires_specific_exam=False,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "dehydration": "may be present",
+                "abdomen": "may be tender"
+            },
+            vital_sign_changes={
+                "heart_rate": (10, 25),
+                "blood_pressure": (5, 20)
+            },
+            lab_correlates=["electrolytes", "pregnancy_test"],
+            imaging_correlates=[]
         )
         
         symptoms["diarrhea"] = Symptom(
@@ -207,7 +404,21 @@ class ComprehensiveSymptomLibrary:
             typical_duration="days",
             aggravating_factors=["certain foods", "stress", "medications"],
             relieving_factors=["hydration", "bland diet", "antidiarrheals"],
-            associated_symptoms=["abdominal pain", "nausea", "dehydration", "weakness"]
+            associated_symptoms=["abdominal pain", "nausea", "dehydration", "weakness"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED],
+            discovery_difficulty=0.1,
+            requires_specific_exam=False,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "abdomen": "may be tender",
+                "dehydration": "may be present"
+            },
+            vital_sign_changes={
+                "heart_rate": (5, 15)
+            },
+            lab_correlates=["stool_culture", "electrolytes"],
+            imaging_correlates=[]
         )
         
         symptoms["constipation"] = Symptom(
@@ -222,7 +433,19 @@ class ComprehensiveSymptomLibrary:
             typical_duration="days to weeks",
             aggravating_factors=["low fiber diet", "dehydration", "sedentary lifestyle"],
             relieving_factors=["high fiber diet", "hydration", "exercise", "laxatives"],
-            associated_symptoms=["abdominal pain", "bloating", "straining", "hard stools"]
+            associated_symptoms=["abdominal pain", "bloating", "straining", "hard stools"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED],
+            discovery_difficulty=0.2,
+            requires_specific_exam=False,
+            typical_onset="gradual",
+            progression_pattern="variable",
+            exam_findings={
+                "abdomen": "may be distended",
+                "rectal_exam": "may reveal impaction"
+            },
+            vital_sign_changes={},
+            lab_correlates=["thyroid_function"],
+            imaging_correlates=[]
         )
         
         # neurological symptoms
@@ -238,7 +461,21 @@ class ComprehensiveSymptomLibrary:
             typical_duration="hours to days",
             aggravating_factors=["stress", "lack of sleep", "certain foods", "bright lights"],
             relieving_factors=["rest", "pain medications", "hydration", "dark room"],
-            associated_symptoms=["nausea", "sensitivity to light", "sensitivity to sound"]
+            associated_symptoms=["nausea", "sensitivity to light", "sensitivity to sound"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED],
+            discovery_difficulty=0.1,
+            requires_specific_exam=False,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "neurological_exam": "should be normal",
+                "meningeal_signs": "may be present in meningitis"
+            },
+            vital_sign_changes={
+                "blood_pressure": (5, 15)
+            },
+            lab_correlates=["cbc", "lumbar_puncture"],
+            imaging_correlates=["head_ct", "head_mri"]
         )
         
         symptoms["dizziness"] = Symptom(
@@ -253,7 +490,23 @@ class ComprehensiveSymptomLibrary:
             typical_duration="minutes to hours",
             aggravating_factors=["sudden movement", "standing up quickly", "stress"],
             relieving_factors=["rest", "hydration", "avoiding triggers"],
-            associated_symptoms=["nausea", "sweating", "palpitations", "anxiety"]
+            associated_symptoms=["nausea", "sweating", "palpitations", "anxiety"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.VITAL_SIGNS],
+            discovery_difficulty=0.3,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "orthostatic_vitals": "may show drop",
+                "neurological_exam": "should be normal",
+                "nystagmus": "may be present in vertigo"
+            },
+            vital_sign_changes={
+                "blood_pressure": (10, 30),
+                "heart_rate": (5, 15)
+            },
+            lab_correlates=["electrolytes", "glucose"],
+            imaging_correlates=["head_ct", "head_mri"]
         )
         
         symptoms["numbness"] = Symptom(
@@ -268,7 +521,20 @@ class ComprehensiveSymptomLibrary:
             typical_duration="variable",
             aggravating_factors=["prolonged pressure", "repetitive motion", "cold"],
             relieving_factors=["changing position", "treating underlying cause"],
-            associated_symptoms=["tingling", "weakness", "pain", "burning"]
+            associated_symptoms=["tingling", "weakness", "pain", "burning"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.4,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "sensation": "may be decreased",
+                "motor_strength": "may be decreased",
+                "reflexes": "may be decreased"
+            },
+            vital_sign_changes={},
+            lab_correlates=["glucose", "vitamin_b12", "thyroid_function"],
+            imaging_correlates=["mri_spine", "nerve_conduction"]
         )
         
         symptoms["weakness"] = Symptom(
@@ -283,7 +549,20 @@ class ComprehensiveSymptomLibrary:
             typical_duration="variable",
             aggravating_factors=["exertion", "stress", "lack of sleep"],
             relieving_factors=["rest", "exercise", "treating underlying cause"],
-            associated_symptoms=["fatigue", "numbness", "pain", "difficulty with activities"]
+            associated_symptoms=["fatigue", "numbness", "pain", "difficulty with activities"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.3,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "motor_strength": "may be decreased",
+                "coordination": "may be impaired",
+                "gait": "may be abnormal"
+            },
+            vital_sign_changes={},
+            lab_correlates=["ck", "electrolytes", "thyroid_function"],
+            imaging_correlates=["head_mri", "spine_mri"]
         )
         
         # musculoskeletal symptoms
@@ -299,7 +578,23 @@ class ComprehensiveSymptomLibrary:
             typical_duration="days to weeks",
             aggravating_factors=["movement", "weight bearing", "cold weather"],
             relieving_factors=["rest", "ice", "heat", "anti-inflammatory medications"],
-            associated_symptoms=["stiffness", "swelling", "reduced range of motion"]
+            associated_symptoms=["stiffness", "swelling", "reduced range of motion"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.2,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "tenderness": "may be present",
+                "swelling": "may be present",
+                "range_of_motion": "may be decreased",
+                "crepitus": "may be present"
+            },
+            vital_sign_changes={
+                "temperature": (0.5, 2.0)
+            },
+            lab_correlates=["esr", "crp", "uric_acid", "rheumatoid_factor"],
+            imaging_correlates=["joint_xray", "joint_mri"]
         )
         
         symptoms["back_pain"] = Symptom(
@@ -314,105 +609,27 @@ class ComprehensiveSymptomLibrary:
             typical_duration="days to weeks",
             aggravating_factors=["lifting", "bending", "sitting", "standing"],
             relieving_factors=["rest", "heat", "ice", "exercise", "physical therapy"],
-            associated_symptoms=["stiffness", "muscle spasms", "radiating pain"]
+            associated_symptoms=["stiffness", "muscle spasms", "radiating pain"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.2,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "tenderness": "may be present",
+                "range_of_motion": "may be decreased",
+                "straight_leg_raise": "may be positive",
+                "motor_strength": "may be decreased"
+            },
+            vital_sign_changes={},
+            lab_correlates=["esr", "crp"],
+            imaging_correlates=["spine_xray", "spine_mri"]
         )
         
-        # dermatological symptoms
-        symptoms["rash"] = Symptom(
-            name="Rash",
-            category=SymptomCategory.DERMATOLOGICAL,
-            description="Area of irritated or swollen skin",
-            severity=SymptomSeverity.MILD,
-            associated_conditions=["allergic reaction", "infection", "autoimmune disease", "contact dermatitis"],
-            differential_diagnosis=["eczema", "psoriasis", "fungal infection", "viral exanthem"],
-            red_flags=["widespread", "blisters", "fever", "difficulty breathing"],
-            common_causes=["allergic reaction", "infection", "irritation", "autoimmune"],
-            typical_duration="days to weeks",
-            aggravating_factors=["scratching", "certain soaps", "allergens", "stress"],
-            relieving_factors=["cooling", "moisturizing", "antihistamines", "steroids"],
-            associated_symptoms=["itching", "redness", "swelling", "pain"]
-        )
-        
-        symptoms["itching"] = Symptom(
-            name="Itching",
-            category=SymptomCategory.DERMATOLOGICAL,
-            description="Sensation that causes desire to scratch",
-            severity=SymptomSeverity.MILD,
-            associated_conditions=["allergic reaction", "dry skin", "infection", "liver disease"],
-            differential_diagnosis=["anxiety", "medication side effect", "parasites"],
-            red_flags=["widespread", "blisters", "fever", "jaundice"],
-            common_causes=["dry skin", "allergic reaction", "infection", "anxiety"],
-            typical_duration="variable",
-            aggravating_factors=["heat", "sweating", "certain fabrics", "stress"],
-            relieving_factors=["cooling", "moisturizing", "antihistamines", "avoiding triggers"],
-            associated_symptoms=["rash", "redness", "dry skin", "scratching"]
-        )
-        
-        # genitourinary symptoms
-        symptoms["dysuria"] = Symptom(
-            name="Dysuria",
-            category=SymptomCategory.GENITOURINARY,
-            description="Pain or burning during urination",
-            severity=SymptomSeverity.MODERATE,
-            associated_conditions=["urinary tract infection", "bladder infection", "kidney stone", "STI"],
-            differential_diagnosis=["irritation", "allergic reaction", "medication side effect"],
-            red_flags=["fever", "flank pain", "blood in urine", "frequency"],
-            common_causes=["urinary tract infection", "irritation", "allergic reaction"],
-            typical_duration="days",
-            aggravating_factors=["urination", "certain foods", "dehydration"],
-            relieving_factors=["hydration", "antibiotics", "pain medications"],
-            associated_symptoms=["frequency", "urgency", "blood in urine", "fever"]
-        )
-        
-        symptoms["frequency"] = Symptom(
-            name="Urinary Frequency",
-            category=SymptomCategory.GENITOURINARY,
-            description="Need to urinate more often than usual",
-            severity=SymptomSeverity.MILD,
-            associated_conditions=["urinary tract infection", "diabetes", "prostate enlargement"],
-            differential_diagnosis=["increased fluid intake", "anxiety", "medication side effect"],
-            red_flags=["pain", "blood in urine", "fever", "weight loss"],
-            common_causes=["urinary tract infection", "diabetes", "increased fluid intake"],
-            typical_duration="days to weeks",
-            aggravating_factors=["caffeine", "alcohol", "diuretics", "anxiety"],
-            relieving_factors=["treating underlying cause", "reducing fluid intake"],
-            associated_symptoms=["urgency", "dysuria", "nocturia", "incontinence"]
-        )
-        
-        # endocrine symptoms
-        symptoms["fatigue"] = Symptom(
-            name="Fatigue",
-            category=SymptomCategory.GENERAL,
-            description="Extreme tiredness or lack of energy",
-            severity=SymptomSeverity.MILD,
-            associated_conditions=["anemia", "hypothyroidism", "depression", "sleep apnea"],
-            differential_diagnosis=["lack of sleep", "stress", "deconditioning", "medication side effect"],
-            red_flags=["weight loss", "fever", "night sweats", "shortness of breath"],
-            common_causes=["lack of sleep", "stress", "anemia", "depression"],
-            typical_duration="days to weeks",
-            aggravating_factors=["lack of sleep", "stress", "poor nutrition", "sedentary lifestyle"],
-            relieving_factors=["adequate sleep", "exercise", "good nutrition", "stress management"],
-            associated_symptoms=["weakness", "difficulty concentrating", "mood changes", "sleep problems"]
-        )
-        
-        symptoms["weight_loss"] = Symptom(
-            name="Weight Loss",
-            category=SymptomCategory.GENERAL,
-            description="Unintentional loss of body weight",
-            severity=SymptomSeverity.MODERATE,
-            associated_conditions=["cancer", "hyperthyroidism", "diabetes", "depression"],
-            differential_diagnosis=["dietary changes", "increased activity", "medication side effect"],
-            red_flags=["rapid loss", "fever", "night sweats", "pain"],
-            common_causes=["dietary changes", "increased activity", "stress", "medications"],
-            typical_duration="weeks to months",
-            aggravating_factors=["poor appetite", "nausea", "diarrhea", "stress"],
-            relieving_factors=["adequate nutrition", "treating underlying cause"],
-            associated_symptoms=["fatigue", "weakness", "poor appetite", "night sweats"]
-        )
-        
+        # constitutional symptoms
         symptoms["fever"] = Symptom(
             name="Fever",
-            category=SymptomCategory.GENERAL,
+            category=SymptomCategory.CONSTITUTIONAL,
             description="Elevated body temperature above normal",
             severity=SymptomSeverity.MODERATE,
             associated_conditions=["infection", "inflammation", "cancer", "autoimmune disease"],
@@ -422,25 +639,228 @@ class ComprehensiveSymptomLibrary:
             typical_duration="days",
             aggravating_factors=["infection", "inflammation", "dehydration"],
             relieving_factors=["antipyretics", "cooling", "hydration", "treating cause"],
-            associated_symptoms=["chills", "sweating", "headache", "body aches"]
+            associated_symptoms=["chills", "sweating", "headache", "body aches"],
+            discovery_methods=[DiscoveryMethod.VITAL_SIGNS, DiscoveryMethod.PATIENT_REPORTED],
+            discovery_difficulty=0.1,
+            requires_specific_exam=False,
+            typical_onset="variable",
+            progression_pattern="variable",
+            exam_findings={
+                "temperature": "elevated",
+                "skin": "may be warm and flushed"
+            },
+            vital_sign_changes={
+                "temperature": (2.0, 5.0),
+                "heart_rate": (10, 25)
+            },
+            lab_correlates=["cbc", "blood_culture", "urinalysis"],
+            imaging_correlates=["chest_xray"]
         )
         
-        symptoms["night_sweats"] = Symptom(
-            name="Night Sweats",
-            category=SymptomCategory.GENERAL,
-            description="Excessive sweating during sleep",
-            severity=SymptomSeverity.MODERATE,
-            associated_conditions=["infection", "cancer", "hyperthyroidism", "menopause"],
-            differential_diagnosis=["hot environment", "medication side effect", "anxiety"],
-            red_flags=["weight loss", "fever", "pain", "lymphadenopathy"],
-            common_causes=["infection", "medications", "anxiety", "hot environment"],
+        symptoms["fatigue"] = Symptom(
+            name="Fatigue",
+            category=SymptomCategory.CONSTITUTIONAL,
+            description="Extreme tiredness or lack of energy",
+            severity=SymptomSeverity.MILD,
+            associated_conditions=["anemia", "hypothyroidism", "depression", "sleep apnea"],
+            differential_diagnosis=["lack of sleep", "stress", "deconditioning", "medication side effect"],
+            red_flags=["weight loss", "fever", "night sweats", "shortness of breath"],
+            common_causes=["lack of sleep", "stress", "anemia", "depression"],
             typical_duration="days to weeks",
-            aggravating_factors=["hot environment", "heavy bedding", "stress", "medications"],
-            relieving_factors=["cool environment", "light bedding", "treating underlying cause"],
-            associated_symptoms=["fever", "weight loss", "fatigue", "chills"]
+            aggravating_factors=["lack of sleep", "stress", "poor nutrition", "sedentary lifestyle"],
+            relieving_factors=["adequate sleep", "exercise", "good nutrition", "stress management"],
+            associated_symptoms=["weakness", "difficulty concentrating", "mood changes", "sleep problems"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED],
+            discovery_difficulty=0.3,
+            requires_specific_exam=False,
+            typical_onset="gradual",
+            progression_pattern="variable",
+            exam_findings={
+                "general_appearance": "may appear tired",
+                "pallor": "may be present in anemia"
+            },
+            vital_sign_changes={},
+            lab_correlates=["cbc", "thyroid_function", "glucose"],
+            imaging_correlates=[]
+        )
+        
+        symptoms["weight_loss"] = Symptom(
+            name="Weight Loss",
+            category=SymptomCategory.CONSTITUTIONAL,
+            description="Unintentional loss of body weight",
+            severity=SymptomSeverity.MODERATE,
+            associated_conditions=["cancer", "hyperthyroidism", "diabetes", "depression"],
+            differential_diagnosis=["dietary changes", "increased activity", "medication side effect"],
+            red_flags=["rapid loss", "fever", "night sweats", "pain"],
+            common_causes=["dietary changes", "increased activity", "stress", "medications"],
+            typical_duration="weeks to months",
+            aggravating_factors=["poor appetite", "nausea", "diarrhea", "stress"],
+            relieving_factors=["adequate nutrition", "treating underlying cause"],
+            associated_symptoms=["fatigue", "weakness", "poor appetite", "night sweats"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.OBSERVATION],
+            discovery_difficulty=0.4,
+            requires_specific_exam=False,
+            typical_onset="gradual",
+            progression_pattern="variable",
+            exam_findings={
+                "general_appearance": "may appear thin",
+                "muscle_mass": "may be decreased"
+            },
+            vital_sign_changes={},
+            lab_correlates=["thyroid_function", "glucose", "cancer_markers"],
+            imaging_correlates=["ct_scan", "pet_scan"]
         )
         
         return symptoms
+    
+    def add_symptom_progression(self, symptom_name: str, patient_id: str, onset_time: datetime = None) -> str:
+        """add a symptom progression for a patient"""
+        if symptom_name not in self.symptoms:
+            return f"Error: Symptom '{symptom_name}' not found."
+        
+        symptom = self.symptoms[symptom_name]
+        if onset_time is None:
+            onset_time = datetime.now()
+        
+        progression_id = f"{patient_id}_{symptom_name}_{len(self.active_symptoms)}"
+        
+        self.active_symptoms[progression_id] = SymptomProgression(
+            onset_time=onset_time,
+            initial_severity=symptom.severity,
+            current_severity=symptom.severity,
+            progression_rate=random.uniform(0.1, 0.5),  # severity change per hour
+            triggers=symptom.aggravating_factors.copy(),
+            relieving_factors=symptom.relieving_factors.copy(),
+            associated_symptoms=symptom.associated_symptoms.copy(),
+            discovered_by=[]
+        )
+        
+        return f"✓ Symptom '{symptom.name}' progression started for patient {patient_id}"
+    
+    def discover_symptom(self, symptom_name: str, patient_id: str, method: DiscoveryMethod, 
+                        discovery_time: datetime = None) -> str:
+        """discover a symptom through a specific method"""
+        if symptom_name not in self.symptoms:
+            return f"Error: Symptom '{symptom_name}' not found."
+        
+        symptom = self.symptoms[symptom_name]
+        
+        # find active progression for this patient and symptom
+        progression_id = None
+        for pid, progression in self.active_symptoms.items():
+            if patient_id in pid and symptom_name in pid:
+                progression_id = pid
+                break
+        
+        if not progression_id:
+            return f"Error: No active progression found for symptom '{symptom_name}' in patient {patient_id}"
+        
+        progression = self.active_symptoms[progression_id]
+        
+        # check if this method can discover this symptom
+        if method not in symptom.discovery_methods:
+            return f"Error: Method '{method.value}' cannot discover symptom '{symptom_name}'"
+        
+        # check discovery difficulty
+        if random.random() < symptom.discovery_difficulty:
+            return f"Note: Symptom '{symptom_name}' not discovered by {method.value} (difficulty: {symptom.discovery_difficulty})"
+        
+        # add discovery method
+        if method not in progression.discovered_by:
+            progression.discovered_by.append(method)
+        
+        # set discovery time
+        if discovery_time is None:
+            discovery_time = datetime.now()
+        progression.discovery_time = discovery_time
+        
+        # record discovery
+        self.discovery_history.append({
+            'symptom_name': symptom_name,
+            'patient_id': patient_id,
+            'method': method.value,
+            'discovery_time': discovery_time,
+            'difficulty': symptom.discovery_difficulty
+        })
+        
+        return f"✓ Symptom '{symptom.name}' discovered via {method.value}"
+    
+    def update_symptom_progressions(self, current_time: datetime = None) -> List[str]:
+        """update all active symptom progressions"""
+        if current_time is None:
+            current_time = datetime.now()
+        
+        updates = []
+        
+        for progression_id, progression in self.active_symptoms.items():
+            # calculate time elapsed
+            time_elapsed = (current_time - progression.onset_time).total_seconds() / 3600  # hours
+            
+            # update severity based on progression rate
+            severity_change = progression.progression_rate * time_elapsed
+            
+            # convert severity to numeric for calculation
+            severity_map = {
+                SymptomSeverity.MILD: 1,
+                SymptomSeverity.MODERATE: 2,
+                SymptomSeverity.SEVERE: 3,
+                SymptomSeverity.CRITICAL: 4
+            }
+            
+            current_severity_num = severity_map.get(progression.current_severity, 2)
+            new_severity_num = min(4, max(1, current_severity_num + severity_change))
+            
+            # convert back to severity enum
+            reverse_severity_map = {v: k for k, v in severity_map.items()}
+            new_severity = reverse_severity_map.get(int(new_severity_num), SymptomSeverity.MODERATE)
+            
+            if new_severity != progression.current_severity:
+                progression.current_severity = new_severity
+                updates.append(f"Symptom {progression_id} severity changed to {new_severity.value}")
+        
+        return updates
+    
+    def get_discovered_symptoms(self, patient_id: str) -> List[Dict[str, Any]]:
+        """get all discovered symptoms for a patient"""
+        discovered = []
+        
+        for progression_id, progression in self.active_symptoms.items():
+            if patient_id in progression_id and progression.discovered_by:
+                symptom_name = progression_id.split('_')[1]
+                symptom = self.symptoms.get(symptom_name)
+                
+                if symptom:
+                    discovered.append({
+                        'name': symptom.name,
+                        'category': symptom.category.value,
+                        'severity': progression.current_severity.value,
+                        'discovery_methods': [m.value for m in progression.discovered_by],
+                        'discovery_time': progression.discovery_time,
+                        'description': symptom.description,
+                        'red_flags': symptom.red_flags
+                    })
+        
+        return discovered
+    
+    def get_undiscovered_symptoms(self, patient_id: str) -> List[Dict[str, Any]]:
+        """get all undiscovered symptoms for a patient"""
+        undiscovered = []
+        
+        for progression_id, progression in self.active_symptoms.items():
+            if patient_id in progression_id and not progression.discovered_by:
+                symptom_name = progression_id.split('_')[1]
+                symptom = self.symptoms.get(symptom_name)
+                
+                if symptom:
+                    undiscovered.append({
+                        'name': symptom.name,
+                        'category': symptom.category.value,
+                        'discovery_difficulty': symptom.discovery_difficulty,
+                        'discovery_methods': [m.value for m in symptom.discovery_methods],
+                        'requires_specific_exam': symptom.requires_specific_exam
+                    })
+        
+        return undiscovered
     
     def get_symptom(self, name: str) -> Optional[Symptom]:
         """get a specific symptom by name"""

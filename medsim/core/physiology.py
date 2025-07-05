@@ -22,6 +22,8 @@ class OrganSystem(Enum):
     IMMUNE = "immune"
     HEPATIC = "hepatic"
     MUSCULOSKELETAL = "musculoskeletal"
+    LYMPHATIC = "lymphatic"
+    INTEGUMENTARY = "integumentary"
 
 class DiseaseState(Enum):
     """disease progression states"""
@@ -30,403 +32,549 @@ class DiseaseState(Enum):
     MODERATE = "moderate"
     SEVERE = "severe"
     CRITICAL = "critical"
+    TERMINAL = "terminal"
+
+class DiscoveryMethod(Enum):
+    """how patient information is discovered"""
+    PATIENT_REPORTED = "patient_reported"
+    PHYSICAL_EXAM = "physical_exam"
+    VITAL_SIGNS = "vital_signs"
+    LAB_RESULTS = "lab_results"
+    IMAGING = "imaging"
+    OBSERVATION = "observation"
+    CALCULATION = "calculation"
+    MEDICAL_HISTORY = "medical_history"
+    SPECIALIZED_TEST = "specialized_test"
 
 @dataclass
-class CardiovascularSystem:
-    """cardiovascular system parameters"""
-    # hemodynamics
-    cardiac_output: float = 5.0  # L/min
-    stroke_volume: float = 70.0  # mL
-    heart_rate: int = 80  # bpm
-    blood_pressure_systolic: int = 120  # mmHg
-    blood_pressure_diastolic: int = 80  # mmHg
-    mean_arterial_pressure: float = 93.3  # mmHg
+class DiscoveredInformation:
+    """information that has been discovered about a patient"""
+    value: Any
+    discovery_method: DiscoveryMethod
+    discovery_time: datetime
+    discovered_by: str = "doctor"  # who discovered it
+    confidence: float = 1.0  # confidence in the value (0.0 to 1.0)
+    notes: List[str] = field(default_factory=list)
+
+@dataclass
+class PhysiologicalParameter:
+    """enhanced physiological parameter with real-time tracking"""
+    name: str
+    current_value: float
+    normal_range: Tuple[float, float]
+    unit: str
+    system: OrganSystem
+    trend_data: List[Tuple[datetime, float]] = field(default_factory=list)
+    last_update: datetime = field(default_factory=datetime.now)
+    is_critical: bool = False
+    critical_threshold: Optional[float] = None
+    alert_level: str = "normal"  # normal, warning, critical, emergency
+
+@dataclass
+class DiseaseProcess:
+    """enhanced disease process with progression modeling"""
+    name: str
+    system: OrganSystem
+    current_state: DiseaseState
+    severity: float  # 0.0 to 1.0
+    onset_time: datetime
+    progression_rate: float  # severity change per hour
+    affecting_systems: List[OrganSystem] = field(default_factory=list)
+    symptoms: List[str] = field(default_factory=list)
+    complications: List[str] = field(default_factory=list)
+    treatments: List[str] = field(default_factory=list)
+    prognosis: str = "unknown"
+    mortality_risk: float = 0.0
+
+@dataclass
+class PatientProfile:
+    """enhanced patient profile with sophisticated physiological modeling"""
+    patient_id: str
+    name: str
+    age: int
+    gender: str
+    height_cm: float
+    weight_kg: float
     
-    # cardiac function
-    ejection_fraction: float = 0.65  # 65%
-    cardiac_index: float = 3.0  # L/min/m²
-    systemic_vascular_resistance: float = 1200  # dyn·s/cm⁵
+    # discovered information
+    discovered_info: Dict[str, DiscoveredInformation] = field(default_factory=dict)
     
-    # rhythm
-    rhythm: str = "normal sinus"
-    conduction_abnormalities: List[str] = field(default_factory=list)
+    # enhanced vitals with real-time tracking
+    vitals: Dict[str, PhysiologicalParameter] = field(default_factory=dict)
     
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
+    # medical history (hidden until discovered)
+    medical_history: List[str] = field(default_factory=list)
+    medications: List[str] = field(default_factory=list)
+    allergies: List[str] = field(default_factory=list)
+    family_history: List[str] = field(default_factory=list)
+    social_history: Dict[str, Any] = field(default_factory=dict)
     
-    def update_from_stress(self, stress_level: float):
-        """update cv parameters based on stress"""
-        if stress_level > 0.7:  # high stress
-            self.heart_rate = min(150, self.heart_rate + 20)
-            self.blood_pressure_systolic = min(180, self.blood_pressure_systolic + 15)
-            self.cardiac_output = min(8.0, self.cardiac_output + 1.5)
-        elif stress_level > 0.3:  # moderate stress
-            self.heart_rate = min(120, self.heart_rate + 10)
-            self.blood_pressure_systolic = min(160, self.blood_pressure_systolic + 8)
-            self.cardiac_output = min(6.5, self.cardiac_output + 0.8)
+    # physical exam findings (hidden until discovered)
+    physical_exam: Dict[str, Any] = field(default_factory=dict)
+    
+    # lab results (hidden until ordered and received)
+    lab_results: Dict[str, Any] = field(default_factory=dict)
+    
+    # imaging results (hidden until ordered and received)
+    imaging_results: Dict[str, Any] = field(default_factory=dict)
+    
+    # calculated values (hidden until calculated)
+    bmi: Optional[float] = None
+    body_surface_area: Optional[float] = None
+    ideal_body_weight: Optional[float] = None
+    
+    # symptoms (managed by symptom library)
+    symptoms: List[str] = field(default_factory=list)
+    
+    # enhanced disease processes
+    active_diseases: List[DiseaseProcess] = field(default_factory=list)
+    
+    # treatment history
+    treatments: List[Dict[str, Any]] = field(default_factory=list)
+    
+    # assessment and notes
+    assessment: List[str] = field(default_factory=list)
+    notes: List[str] = field(default_factory=list)
+    
+    # physiological state
+    stress_level: float = 0.0  # 0.0 to 1.0
+    pain_level: float = 0.0  # 0.0 to 10.0
+    consciousness_level: str = "alert"  # alert, confused, drowsy, unresponsive
+    mobility_status: str = "ambulatory"  # ambulatory, wheelchair, bedbound
+    
+    def __post_init__(self):
+        """initialize calculated values and physiological parameters"""
+        self._calculate_bmi()
+        self._calculate_body_surface_area()
+        self._calculate_ideal_body_weight()
+        self._initialize_vitals()
+    
+    def _calculate_bmi(self):
+        """calculate bmi but don't reveal it"""
+        if self.height_cm > 0 and self.weight_kg > 0:
+            height_m = self.height_cm / 100
+            self.bmi = self.weight_kg / (height_m * height_m)
+    
+    def _calculate_body_surface_area(self):
+        """calculate body surface area using dubois formula"""
+        if self.height_cm > 0 and self.weight_kg > 0:
+            self.body_surface_area = 0.007184 * (self.weight_kg ** 0.425) * (self.height_cm ** 0.725)
+    
+    def _calculate_ideal_body_weight(self):
+        """calculate ideal body weight using devine formula"""
+        if self.height_cm > 0:
+            height_inches = self.height_cm / 2.54
+            if self.gender.lower() == 'male':
+                self.ideal_body_weight = 50 + 2.3 * (height_inches - 60)
+            else:
+                self.ideal_body_weight = 45.5 + 2.3 * (height_inches - 60)
+    
+    def _initialize_vitals(self):
+        """initialize vital signs with normal ranges"""
+        self.vitals = {
+            'heart_rate': PhysiologicalParameter(
+                name="Heart Rate",
+                current_value=80.0,
+                normal_range=(60.0, 100.0),
+                unit="bpm",
+                system=OrganSystem.CARDIOVASCULAR,
+                critical_threshold=150.0
+            ),
+            'systolic_bp': PhysiologicalParameter(
+                name="Systolic Blood Pressure",
+                current_value=120.0,
+                normal_range=(90.0, 140.0),
+                unit="mmHg",
+                system=OrganSystem.CARDIOVASCULAR,
+                critical_threshold=180.0
+            ),
+            'diastolic_bp': PhysiologicalParameter(
+                name="Diastolic Blood Pressure",
+                current_value=80.0,
+                normal_range=(60.0, 90.0),
+                unit="mmHg",
+                system=OrganSystem.CARDIOVASCULAR,
+                critical_threshold=110.0
+            ),
+            'respiratory_rate': PhysiologicalParameter(
+                name="Respiratory Rate",
+                current_value=16.0,
+                normal_range=(12.0, 20.0),
+                unit="/min",
+                system=OrganSystem.RESPIRATORY,
+                critical_threshold=30.0
+            ),
+            'temperature': PhysiologicalParameter(
+                name="Temperature",
+                current_value=37.0,
+                normal_range=(36.5, 37.5),
+                unit="°C",
+                system=OrganSystem.INTEGUMENTARY,
+                critical_threshold=40.0
+            ),
+            'oxygen_saturation': PhysiologicalParameter(
+                name="Oxygen Saturation",
+                current_value=98.0,
+                normal_range=(95.0, 100.0),
+                unit="%",
+                system=OrganSystem.RESPIRATORY,
+                critical_threshold=90.0
+            ),
+            'blood_glucose': PhysiologicalParameter(
+                name="Blood Glucose",
+                current_value=100.0,
+                normal_range=(70.0, 140.0),
+                unit="mg/dL",
+                system=OrganSystem.ENDOCRINE,
+                critical_threshold=400.0
+            ),
+            'creatinine': PhysiologicalParameter(
+                name="Creatinine",
+                current_value=1.0,
+                normal_range=(0.6, 1.2),
+                unit="mg/dL",
+                system=OrganSystem.RENAL,
+                critical_threshold=5.0
+            ),
+            'sodium': PhysiologicalParameter(
+                name="Sodium",
+                current_value=140.0,
+                normal_range=(135.0, 145.0),
+                unit="mEq/L",
+                system=OrganSystem.RENAL,
+                critical_threshold=160.0
+            ),
+            'potassium': PhysiologicalParameter(
+                name="Potassium",
+                current_value=4.0,
+                normal_range=(3.5, 5.0),
+                unit="mEq/L",
+                system=OrganSystem.RENAL,
+                critical_threshold=6.5
+            )
+        }
+    
+    def update_vital(self, vital_name: str, new_value: float, timestamp: datetime = None):
+        """update a vital sign with trend tracking"""
+        if vital_name in self.vitals:
+            vital = self.vitals[vital_name]
+            vital.current_value = new_value
+            vital.last_update = timestamp or datetime.now()
+            
+            # add to trend data
+            vital.trend_data.append((vital.last_update, new_value))
+            
+            # keep only last 100 data points
+            if len(vital.trend_data) > 100:
+                vital.trend_data = vital.trend_data[-100:]
+            
+            # update alert level
+            self._update_alert_level(vital)
+    
+    def _update_alert_level(self, vital: PhysiologicalParameter):
+        """update alert level based on current value"""
+        if vital.critical_threshold and vital.current_value >= vital.critical_threshold:
+            vital.alert_level = "emergency"
+        elif vital.current_value > vital.normal_range[1] or vital.current_value < vital.normal_range[0]:
+            vital.alert_level = "warning"
+        else:
+            vital.alert_level = "normal"
+    
+    def discover_information(self, info_type: str, method: DiscoveryMethod, 
+                           value: Any = None, confidence: float = 1.0) -> str:
+        """discover information about the patient"""
+        discovery_time = datetime.now()
         
-        self.mean_arterial_pressure = self.blood_pressure_diastolic + (self.blood_pressure_systolic - self.blood_pressure_diastolic) / 3
-
-@dataclass
-class RespiratorySystem:
-    """respiratory system parameters"""
-    # ventilation
-    respiratory_rate: int = 16  # breaths/min
-    tidal_volume: float = 500.0  # mL
-    minute_ventilation: float = 8.0  # L/min
-    vital_capacity: float = 4.5  # L
-    fev1: float = 3.6  # L (forced expiratory volume in 1 second)
+        # handle different types of information
+        if info_type == "bmi":
+            if self.bmi is not None:
+                self.discovered_info["bmi"] = DiscoveredInformation(
+                    value=self.bmi,
+                    discovery_method=method,
+                    discovery_time=discovery_time,
+                    confidence=confidence
+                )
+                return f"✓ BMI discovered: {self.bmi:.1f} kg/m²"
+            else:
+                return "Error: BMI not available"
+        
+        elif info_type == "body_surface_area":
+            if self.body_surface_area is not None:
+                self.discovered_info["body_surface_area"] = DiscoveredInformation(
+                    value=self.body_surface_area,
+                    discovery_method=method,
+                    discovery_time=discovery_time,
+                    confidence=confidence
+                )
+                return f"✓ Body surface area discovered: {self.body_surface_area:.2f} m²"
+            else:
+                return "Error: Body surface area not available"
+        
+        elif info_type == "ideal_body_weight":
+            if self.ideal_body_weight is not None:
+                self.discovered_info["ideal_body_weight"] = DiscoveredInformation(
+                    value=self.ideal_body_weight,
+                    discovery_method=method,
+                    discovery_time=discovery_time,
+                    confidence=confidence
+                )
+                return f"✓ Ideal body weight discovered: {self.ideal_body_weight:.1f} kg"
+            else:
+                return "Error: Ideal body weight not available"
+        
+        elif info_type == "medical_history":
+            if value is not None:
+                self.discovered_info["medical_history"] = DiscoveredInformation(
+                    value=value,
+                    discovery_method=method,
+                    discovery_time=discovery_time,
+                    confidence=confidence
+                )
+                self.medical_history = value
+                return f"✓ Medical history discovered: {len(value)} conditions"
+            else:
+                return "Error: No medical history provided"
+        
+        elif info_type == "medications":
+            if value is not None:
+                self.discovered_info["medications"] = DiscoveredInformation(
+                    value=value,
+                    discovery_method=method,
+                    discovery_time=discovery_time,
+                    confidence=confidence
+                )
+                self.medications = value
+                return f"✓ Medications discovered: {len(value)} medications"
+            else:
+                return "Error: No medications provided"
+        
+        elif info_type == "allergies":
+            if value is not None:
+                self.discovered_info["allergies"] = DiscoveredInformation(
+                    value=value,
+                    discovery_method=method,
+                    discovery_time=discovery_time,
+                    confidence=confidence
+                )
+                self.allergies = value
+                return f"✓ Allergies discovered: {len(value)} allergies"
+            else:
+                return "Error: No allergies provided"
+        
+        elif info_type == "physical_exam":
+            if value is not None:
+                self.discovered_info["physical_exam"] = DiscoveredInformation(
+                    value=value,
+                    discovery_method=method,
+                    discovery_time=discovery_time,
+                    confidence=confidence
+                )
+                self.physical_exam.update(value)
+                return f"✓ Physical exam findings discovered: {len(value)} findings"
+            else:
+                return "Error: No physical exam findings provided"
+        
+        elif info_type == "lab_results":
+            if value is not None:
+                self.discovered_info["lab_results"] = DiscoveredInformation(
+                    value=value,
+                    discovery_method=method,
+                    discovery_time=discovery_time,
+                    confidence=confidence
+                )
+                self.lab_results.update(value)
+                return f"✓ Lab results discovered: {len(value)} results"
+            else:
+                return "Error: No lab results provided"
+        
+        elif info_type == "imaging_results":
+            if value is not None:
+                self.discovered_info["imaging_results"] = DiscoveredInformation(
+                    value=value,
+                    discovery_method=method,
+                    discovery_time=discovery_time,
+                    confidence=confidence
+                )
+                self.imaging_results.update(value)
+                return f"✓ Imaging results discovered: {len(value)} results"
+            else:
+                return "Error: No imaging results provided"
+        
+        else:
+            return f"Error: Unknown information type '{info_type}'"
     
-    # gas exchange
-    oxygen_saturation: float = 98.0  # %
-    pao2: float = 95.0  # mmHg (arterial oxygen pressure)
-    paco2: float = 40.0  # mmHg (arterial carbon dioxide pressure)
-    ph: float = 7.40
+    def get_discovered_information(self, info_type: str = None) -> Dict[str, Any]:
+        """get all discovered information or specific type"""
+        if info_type:
+            if info_type in self.discovered_info:
+                info = self.discovered_info[info_type]
+                return {
+                    'value': info.value,
+                    'discovery_method': info.discovery_method.value,
+                    'discovery_time': info.discovery_time,
+                    'confidence': info.confidence
+                }
+            else:
+                return {}
+        else:
+            return {
+                key: {
+                    'value': info.value,
+                    'discovery_method': info.discovery_method.value,
+                    'discovery_time': info.discovery_time,
+                    'confidence': info.confidence
+                }
+                for key, info in self.discovered_info.items()
+            }
     
-    # mechanics
-    peak_inspiratory_pressure: float = 20.0  # cmH2O
-    positive_end_expiratory_pressure: float = 5.0  # cmH2O
+    def get_undiscovered_information(self) -> List[str]:
+        """get list of information types that haven't been discovered"""
+        all_info_types = [
+            "bmi", "body_surface_area", "ideal_body_weight",
+            "medical_history", "medications", "allergies",
+            "physical_exam", "lab_results", "imaging_results"
+        ]
+        
+        discovered_types = set(self.discovered_info.keys())
+        return [info_type for info_type in all_info_types if info_type not in discovered_types]
     
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
+    def get_available_vitals(self) -> Dict[str, Any]:
+        """get current vital signs with alert levels"""
+        return {
+            name: {
+                'value': vital.current_value,
+                'unit': vital.unit,
+                'normal_range': vital.normal_range,
+                'alert_level': vital.alert_level,
+                'last_update': vital.last_update
+            }
+            for name, vital in self.vitals.items()
+        }
     
-    def update_from_stress(self, stress_level: float):
-        """update respiratory parameters based on stress"""
-        if stress_level > 0.7:  # high stress
-            self.respiratory_rate = min(30, self.respiratory_rate + 8)
-            self.minute_ventilation = min(15.0, self.minute_ventilation + 2.0)
-        elif stress_level > 0.3:  # moderate stress
-            self.respiratory_rate = min(24, self.respiratory_rate + 4)
-            self.minute_ventilation = min(12.0, self.minute_ventilation + 1.0)
-
-@dataclass
-class RenalSystem:
-    """renal system parameters"""
-    # function
-    glomerular_filtration_rate: float = 100.0  # mL/min
-    creatinine: float = 1.0  # mg/dL
-    bun: float = 15.0  # mg/dL
-    urine_output: float = 1.0  # mL/kg/hr
+    def get_critical_vitals(self) -> List[Dict[str, Any]]:
+        """get vitals that are in critical or emergency state"""
+        critical = []
+        for name, vital in self.vitals.items():
+            if vital.alert_level in ["critical", "emergency"]:
+                critical.append({
+                    'name': vital.name,
+                    'value': vital.current_value,
+                    'unit': vital.unit,
+                    'alert_level': vital.alert_level,
+                    'normal_range': vital.normal_range
+                })
+        return critical
     
-    # electrolytes
-    sodium: float = 140.0  # mEq/L
-    potassium: float = 4.0  # mEq/L
-    chloride: float = 102.0  # mEq/L
-    bicarbonate: float = 24.0  # mEq/L
+    def get_vital_trends(self, vital_name: str, hours: int = 24) -> List[Tuple[datetime, float]]:
+        """get trend data for a vital sign"""
+        if vital_name in self.vitals:
+            vital = self.vitals[vital_name]
+            cutoff_time = datetime.now() - timedelta(hours=hours)
+            return [(timestamp, value) for timestamp, value in vital.trend_data 
+                   if timestamp >= cutoff_time]
+        return []
     
-    # acid-base
-    ph: float = 7.40
-    base_excess: float = 0.0  # mEq/L
+    def add_disease(self, disease_name: str, system: OrganSystem, severity: float = 0.5) -> str:
+        """add a disease process to the patient"""
+        disease = DiseaseProcess(
+            name=disease_name,
+            system=system,
+            current_state=DiseaseState.MILD if severity < 0.3 else DiseaseState.MODERATE if severity < 0.7 else DiseaseState.SEVERE,
+            severity=severity,
+            onset_time=datetime.now(),
+            progression_rate=random.uniform(0.01, 0.1)
+        )
+        self.active_diseases.append(disease)
+        return f"✓ Added disease: {disease_name} (severity: {severity:.2f})"
     
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
+    def update_diseases(self) -> List[str]:
+        """update all active disease processes"""
+        updates = []
+        
+        for disease in self.active_diseases:
+            # calculate time elapsed
+            time_elapsed = (datetime.now() - disease.onset_time).total_seconds() / 3600  # hours
+            
+            # update severity based on progression rate
+            severity_change = disease.progression_rate * time_elapsed
+            new_severity = min(1.0, disease.severity + severity_change)
+            
+            if new_severity != disease.severity:
+                old_state = disease.current_state
+                disease.severity = new_severity
+                
+                # update disease state based on severity
+                if new_severity < 0.3:
+                    disease.current_state = DiseaseState.MILD
+                elif new_severity < 0.7:
+                    disease.current_state = DiseaseState.MODERATE
+                else:
+                    disease.current_state = DiseaseState.SEVERE
+                
+                if disease.current_state != old_state:
+                    updates.append(f"Disease {disease.name} progressed from {old_state.value} to {disease.current_state.value}")
+        
+        return updates
     
-    def update_from_stress(self, stress_level: float):
-        """update renal parameters based on stress"""
-        if stress_level > 0.7:  # high stress - reduced perfusion
-            self.urine_output = max(0.3, self.urine_output - 0.3)
-            self.glomerular_filtration_rate = max(60.0, self.glomerular_filtration_rate - 10.0)
-
-@dataclass
-class EndocrineSystem:
-    """endocrine system parameters"""
-    # glucose metabolism
-    blood_glucose: float = 100.0  # mg/dL
-    hba1c: float = 5.7  # %
-    insulin_level: float = 10.0  # μU/mL
-    glucagon_level: float = 50.0  # pg/mL
+    def add_symptom(self, symptom: str) -> str:
+        """add a symptom to the patient"""
+        if symptom not in self.symptoms:
+            self.symptoms.append(symptom)
+            return f"✓ Added symptom: {symptom}"
+        else:
+            return f"Symptom '{symptom}' already present"
     
-    # thyroid function
-    tsh: float = 2.5  # μIU/mL
-    free_t4: float = 1.2  # ng/dL
-    free_t3: float = 3.2  # pg/mL
+    def remove_symptom(self, symptom: str) -> str:
+        """remove a symptom from the patient"""
+        if symptom in self.symptoms:
+            self.symptoms.remove(symptom)
+            return f"✓ Removed symptom: {symptom}"
+        else:
+            return f"Symptom '{symptom}' not found"
     
-    # adrenal function
-    cortisol: float = 15.0  # μg/dL
-    aldosterone: float = 10.0  # ng/dL
+    def add_treatment(self, treatment: Dict[str, Any]) -> str:
+        """add a treatment to the patient's history"""
+        treatment['timestamp'] = datetime.now()
+        self.treatments.append(treatment)
+        return f"✓ Added treatment: {treatment.get('name', 'Unknown')}"
     
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
+    def add_assessment(self, assessment: str) -> str:
+        """add an assessment note"""
+        self.assessment.append(f"{datetime.now().strftime('%Y-%m-%d %H:%M')}: {assessment}")
+        return f"✓ Added assessment: {assessment}"
     
-    def update_from_stress(self, stress_level: float):
-        """update endocrine parameters based on stress"""
-        if stress_level > 0.7:  # high stress
-            self.cortisol = min(30.0, self.cortisol + 8.0)
-            self.blood_glucose = min(200.0, self.blood_glucose + 20.0)
-        elif stress_level > 0.3:  # moderate stress
-            self.cortisol = min(25.0, self.cortisol + 5.0)
-            self.blood_glucose = min(150.0, self.blood_glucose + 10.0)
-
-@dataclass
-class NeurologicalSystem:
-    """neurological system parameters"""
-    # consciousness
-    glasgow_coma_scale: int = 15
-    consciousness_level: str = "alert"
-    orientation: str = "oriented"
+    def add_note(self, note: str) -> str:
+        """add a general note"""
+        self.notes.append(f"{datetime.now().strftime('%Y-%m-%d %H:%M')}: {note}")
+        return f"✓ Added note: {note}"
     
-    # cognitive function
-    memory: str = "intact"
-    attention: str = "normal"
-    language: str = "normal"
-    
-    # motor function
-    motor_strength: Dict[str, int] = field(default_factory=lambda: {
-        "right_arm": 5, "left_arm": 5, "right_leg": 5, "left_leg": 5
-    })
-    reflexes: Dict[str, str] = field(default_factory=lambda: {
-        "biceps": "2+", "triceps": "2+", "patellar": "2+", "achilles": "2+"
-    })
-    
-    # sensory function
-    sensation: str = "intact"
-    vision: str = "normal"
-    hearing: str = "normal"
-    
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
-    
-    def update_from_stress(self, stress_level: float):
-        """update neurological parameters based on stress"""
-        if stress_level > 0.8:  # very high stress
-            self.consciousness_level = "anxious"
-            self.attention = "distracted"
-
-@dataclass
-class GastrointestinalSystem:
-    """gastrointestinal system parameters"""
-    # motility
-    bowel_sounds: str = "normal"
-    bowel_movements: str = "normal"
-    
-    # liver function
-    alt: float = 25.0  # U/L
-    ast: float = 25.0  # U/L
-    alkaline_phosphatase: float = 70.0  # U/L
-    total_bilirubin: float = 1.0  # mg/dL
-    albumin: float = 4.0  # g/dL
-    
-    # pancreas
-    amylase: float = 60.0  # U/L
-    lipase: float = 30.0  # U/L
-    
-    # symptoms
-    nausea: bool = False
-    vomiting: bool = False
-    abdominal_pain: bool = False
-    diarrhea: bool = False
-    
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
-    
-    def update_from_stress(self, stress_level: float):
-        """update gi parameters based on stress"""
-        if stress_level > 0.7:  # high stress
-            if random.random() < 0.3:
-                self.nausea = True
-            if random.random() < 0.2:
-                self.abdominal_pain = True
-
-@dataclass
-class HematologicalSystem:
-    """hematological system parameters"""
-    # red blood cells
-    hemoglobin: float = 14.0  # g/dL
-    hematocrit: float = 42.0  # %
-    red_blood_cell_count: float = 4.8  # million/μL
-    mcv: float = 90.0  # fL (mean corpuscular volume)
-    mch: float = 30.0  # pg (mean corpuscular hemoglobin)
-    mchc: float = 34.0  # g/dL (mean corpuscular hemoglobin concentration)
-    
-    # white blood cells
-    white_blood_cell_count: float = 7.5  # thousand/μL
-    neutrophils: float = 4.5  # thousand/μL
-    lymphocytes: float = 2.0  # thousand/μL
-    monocytes: float = 0.5  # thousand/μL
-    eosinophils: float = 0.2  # thousand/μL
-    basophils: float = 0.1  # thousand/μL
-    
-    # platelets
-    platelet_count: float = 250.0  # thousand/μL
-    
-    # coagulation
-    pt: float = 12.0  # seconds
-    inr: float = 1.0
-    ptt: float = 30.0  # seconds
-    fibrinogen: float = 300.0  # mg/dL
-    
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
-    
-    def update_from_stress(self, stress_level: float):
-        """update hematological parameters based on stress"""
-        if stress_level > 0.7:  # high stress
-            self.white_blood_cell_count = min(15.0, self.white_blood_cell_count + 2.0)
-            self.neutrophils = min(8.0, self.neutrophils + 1.5)
-
-@dataclass
-class ImmuneSystem:
-    """immune system parameters"""
-    # inflammatory markers
-    crp: float = 3.0  # mg/L
-    esr: float = 15.0  # mm/hr
-    ferritin: float = 100.0  # ng/mL
-    
-    # cytokines
-    il6: float = 2.0  # pg/mL
-    tnf_alpha: float = 5.0  # pg/mL
-    
-    # immune function
-    cd4_count: float = 800.0  # cells/μL
-    cd8_count: float = 500.0  # cells/μL
-    nk_cells: float = 200.0  # cells/μL
-    
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
-    
-    def update_from_stress(self, stress_level: float):
-        """update immune parameters based on stress"""
-        if stress_level > 0.7:  # high stress
-            self.crp = min(20.0, self.crp + 5.0)
-            self.il6 = min(15.0, self.il6 + 3.0)
-
-@dataclass
-class HepaticSystem:
-    """hepatic system parameters"""
-    # liver function tests
-    alt: float = 25.0  # U/L
-    ast: float = 25.0  # U/L
-    alkaline_phosphatase: float = 70.0  # U/L
-    ggt: float = 30.0  # U/L
-    total_bilirubin: float = 1.0  # mg/dL
-    direct_bilirubin: float = 0.3  # mg/dL
-    indirect_bilirubin: float = 0.7  # mg/dL
-    albumin: float = 4.0  # g/dL
-    total_protein: float = 7.0  # g/dL
-    
-    # synthetic function
-    pt: float = 12.0  # seconds
-    inr: float = 1.0
-    factor_vii: float = 100.0  # %
-    
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
-    
-    def update_from_stress(self, stress_level: float):
-        """update hepatic parameters based on stress"""
-        if stress_level > 0.8:  # very high stress
-            self.alt = min(50.0, self.alt + 5.0)
-            self.ast = min(50.0, self.ast + 5.0)
-
-@dataclass
-class MusculoskeletalSystem:
-    """musculoskeletal system parameters"""
-    # muscle function
-    muscle_strength: Dict[str, int] = field(default_factory=lambda: {
-        "upper_extremities": 5, "lower_extremities": 5, "grip": 5
-    })
-    
-    # joint function
-    joint_range_of_motion: Dict[str, str] = field(default_factory=lambda: {
-        "shoulders": "normal", "elbows": "normal", "wrists": "normal",
-        "hips": "normal", "knees": "normal", "ankles": "normal"
-    })
-    
-    # bone health
-    bone_density: str = "normal"
-    calcium: float = 9.5  # mg/dL
-    vitamin_d: float = 30.0  # ng/mL
-    
-    # symptoms
-    pain: Dict[str, int] = field(default_factory=dict)  # 0-10 scale
-    stiffness: Dict[str, bool] = field(default_factory=dict)
-    weakness: Dict[str, bool] = field(default_factory=dict)
-    
-    # disease states
-    disease_state: DiseaseState = DiseaseState.NORMAL
-    conditions: List[str] = field(default_factory=list)
-    
-    def update_from_stress(self, stress_level: float):
-        """update musculoskeletal parameters based on stress"""
-        if stress_level > 0.7:  # high stress
-            if random.random() < 0.4:
-                self.pain["general"] = min(5, random.randint(1, 3))
-
-@dataclass
-class DermatologicalSystem:
-    wounds: list = field(default_factory=list)
-    rashes: list = field(default_factory=list)
-    burns: list = field(default_factory=list)
-    turgor: str = 'normal'
-    hydration: str = 'normal'
-    def update_from_stress(self, stress_level: float):
-        if stress_level > 0.7 and random.random() < 0.1:
-            self.turgor = 'decreased'
-
-@dataclass
-class ReproductiveSystem:
-    pregnancy_status: str = 'not_pregnant'
-    menstrual_cycle_day: int = 0
-    hormone_levels: dict = field(default_factory=lambda: {'estrogen': 0, 'progesterone': 0, 'testosterone': 0})
-    sexual_health: str = 'normal'
-    def update_from_stress(self, stress_level: float):
-        if self.pregnancy_status == 'pregnant' and stress_level > 0.8:
-            self.hormone_levels['progesterone'] = max(0, self.hormone_levels['progesterone'] - 1)
-
-@dataclass
-class OphthalmologicSystem:
-    vision: str = 'normal'
-    eye_trauma: bool = False
-    infection: bool = False
-    def update_from_stress(self, stress_level: float):
-        if stress_level > 0.9 and random.random() < 0.05:
-            self.vision = 'blurred'
-
-@dataclass
-class OtolaryngologicSystem:
-    hearing: str = 'normal'
-    balance: str = 'normal'
-    airway: str = 'patent'
-    infection: bool = False
-    def update_from_stress(self, stress_level: float):
-        if stress_level > 0.8 and random.random() < 0.05:
-            self.hearing = 'decreased'
-
-@dataclass
-class PediatricSystem:
-    growth_percentile: float = 50.0
-    congenital_conditions: list = field(default_factory=list)
-    vaccination_status: str = 'up_to_date'
-    def update_from_stress(self, stress_level: float):
-        if stress_level > 0.7 and random.random() < 0.1:
-            self.growth_percentile = max(0, self.growth_percentile - 1)
-
-@dataclass
-class GeriatricSystem:
-    frailty_index: float = 0.0
-    polypharmacy: int = 0
-    cognitive_decline: bool = False
-    def update_from_stress(self, stress_level: float):
-        if stress_level > 0.6:
-            self.frailty_index = min(1.0, self.frailty_index + 0.01)
-
-@dataclass
-class PsychiatricSystem:
-    mood: str = 'stable'
-    cognition: str = 'intact'
-    substance_use: str = 'none'
-    def update_from_stress(self, stress_level: float):
-        if stress_level > 0.7:
-            self.mood = 'anxious'
+    def get_summary(self, include_undiscovered: bool = False) -> Dict[str, Any]:
+        """get a comprehensive patient summary"""
+        summary = {
+            'patient_id': self.patient_id,
+            'name': self.name,
+            'age': self.age,
+            'gender': self.gender,
+            'height_cm': self.height_cm,
+            'weight_kg': self.weight_kg,
+            'vitals': self.get_available_vitals(),
+            'critical_vitals': self.get_critical_vitals(),
+            'symptoms': self.symptoms,
+            'active_diseases': [d.name for d in self.active_diseases],
+            'discovered_info': self.get_discovered_information(),
+            'treatments': len(self.treatments),
+            'assessment_notes': len(self.assessment),
+            'general_notes': len(self.notes),
+            'stress_level': self.stress_level,
+            'pain_level': self.pain_level,
+            'consciousness_level': self.consciousness_level,
+            'mobility_status': self.mobility_status
+        }
+        
+        if include_undiscovered:
+            summary['undiscovered_info'] = self.get_undiscovered_information()
+        
+        return summary
 
 class EnhancedPhysiologicalEngine:
     """enhanced physiological engine with multi-organ system modeling"""
@@ -453,6 +601,9 @@ class EnhancedPhysiologicalEngine:
         self.medications: List[Dict[str, Any]] = []
         self.diseases: List[Dict[str, Any]] = []
         self.time_step: int = 0
+        
+        self.patients: Dict[str, PatientProfile] = {}
+        self.discovery_history: List[Dict[str, Any]] = []
         
     def update_systems(self, stress_level: float = 0.0, medications: List[Dict[str, Any]] = None):
         """update all physiological systems"""
@@ -1175,4 +1326,96 @@ class EnhancedPhysiologicalEngine:
                 "substance_use": self.psychiatric.substance_use
             }
         }
-        return status 
+        return status
+
+    def create_patient(self, patient_id: str, name: str, age: int, gender: str, 
+                      height_cm: float, weight_kg: float) -> str:
+        """create a new patient profile"""
+        if patient_id in self.patients:
+            return f"Error: Patient {patient_id} already exists"
+        
+        self.patients[patient_id] = PatientProfile(
+            patient_id=patient_id,
+            name=name,
+            age=age,
+            gender=gender,
+            height_cm=height_cm,
+            weight_kg=weight_kg
+        )
+        
+        return f"✓ Created patient {patient_id}: {name}"
+    
+    def get_patient(self, patient_id: str) -> Optional[PatientProfile]:
+        """get a patient profile"""
+        return self.patients.get(patient_id)
+    
+    def discover_patient_information(self, patient_id: str, info_type: str, 
+                                   method: DiscoveryMethod, value: Any = None) -> str:
+        """discover information about a patient"""
+        patient = self.get_patient(patient_id)
+        if not patient:
+            return f"Error: Patient {patient_id} not found"
+        
+        result = patient.discover_information(info_type, method, value)
+        
+        # record discovery
+        self.discovery_history.append({
+            'patient_id': patient_id,
+            'info_type': info_type,
+            'method': method.value,
+            'timestamp': datetime.now(),
+            'success': '✓' in result
+        })
+        
+        return result
+    
+    def update_patient_vitals(self, patient_id: str, vitals: Dict[str, Any]) -> str:
+        """update a patient's vital signs"""
+        patient = self.get_patient(patient_id)
+        if not patient:
+            return f"Error: Patient {patient_id} not found"
+        
+        return patient.update_vitals(vitals)
+    
+    def add_patient_symptom(self, patient_id: str, symptom: str) -> str:
+        """add a symptom to a patient"""
+        patient = self.get_patient(patient_id)
+        if not patient:
+            return f"Error: Patient {patient_id} not found"
+        
+        return patient.add_symptom(symptom)
+    
+    def add_patient_treatment(self, patient_id: str, treatment: Dict[str, Any]) -> str:
+        """add a treatment to a patient's history"""
+        patient = self.get_patient(patient_id)
+        if not patient:
+            return f"Error: Patient {patient_id} not found"
+        
+        return patient.add_treatment(treatment)
+    
+    def add_patient_assessment(self, patient_id: str, assessment: str) -> str:
+        """add an assessment note to a patient"""
+        patient = self.get_patient(patient_id)
+        if not patient:
+            return f"Error: Patient {patient_id} not found"
+        
+        return patient.add_assessment(assessment)
+    
+    def get_patient_summary(self, patient_id: str, include_undiscovered: bool = False) -> Dict[str, Any]:
+        """get a summary of a patient's information"""
+        patient = self.get_patient(patient_id)
+        if not patient:
+            return {"error": f"Patient {patient_id} not found"}
+        
+        return patient.get_summary(include_undiscovered)
+    
+    def get_all_patients(self) -> List[Dict[str, Any]]:
+        """get summaries of all patients"""
+        return [patient.get_summary() for patient in self.patients.values()]
+    
+    def get_discovery_history(self, patient_id: str = None) -> List[Dict[str, Any]]:
+        """get discovery history for a patient or all patients"""
+        if patient_id:
+            return [entry for entry in self.discovery_history if entry['patient_id'] == patient_id]
+        else:
+            return self.discovery_history.copy() 
