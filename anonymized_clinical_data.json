@@ -1,0 +1,190 @@
+{
+  "patient_records": [
+    {
+      "demographics": {
+        "patient_id": "anon_eb529058",
+        "age": 59,
+        "gender": "male",
+        "race": "white",
+        "ethnicity": "non-hispanic",
+        "insurance": "private"
+      },
+      "presentation": {
+        "chief_complaint": "chest pain for 1 hour",
+        "symptoms": [
+          "chest pain",
+          "shortness of breath",
+          "sweating"
+        ],
+        "vital_signs": {
+          "heart_rate": 95,
+          "bp_systolic": 160,
+          "bp_diastolic": 100,
+          "respiratory_rate": 20,
+          "oxygen_saturation": 96,
+          "temperature": 98.6
+        },
+        "arrival_time": "2024-01-15"
+      },
+      "diagnosis": {
+        "primary": "STEMI",
+        "secondary": [
+          "hypertension",
+          "diabetes"
+        ],
+        "icd_codes": [
+          "I21.9"
+        ]
+      },
+      "treatment": {
+        "medications": [
+          "aspirin",
+          "nitroglycerin",
+          "heparin"
+        ],
+        "procedures": [
+          "cardiac catheterization"
+        ],
+        "sequence": [
+          "aspirin",
+          "nitroglycerin",
+          "cardiac catheterization"
+        ]
+      },
+      "outcome": {
+        "disposition": "admitted",
+        "length_of_stay": 3,
+        "mortality": false,
+        "readmission": false
+      },
+      "temporal_data": {
+        "arrival_to_diagnosis": 30,
+        "diagnosis_to_treatment": 15,
+        "treatment_to_discharge": 180
+      },
+      "metadata": {}
+    },
+    {
+      "demographics": {
+        "patient_id": "anon_13190c47",
+        "age": 67,
+        "gender": "female",
+        "race": "black",
+        "ethnicity": "non-hispanic",
+        "insurance": "medicare"
+      },
+      "presentation": {
+        "chief_complaint": "shortness of breath for 2 days",
+        "symptoms": [
+          "shortness of breath",
+          "cough",
+          "wheezing"
+        ],
+        "vital_signs": {
+          "heart_rate": 110,
+          "bp_systolic": 140,
+          "bp_diastolic": 85,
+          "respiratory_rate": 28,
+          "oxygen_saturation": 88,
+          "temperature": 99.2
+        },
+        "arrival_time": "2024-01-15"
+      },
+      "diagnosis": {
+        "primary": "COPD exacerbation",
+        "secondary": [
+          "hypertension"
+        ],
+        "icd_codes": [
+          "J44.1"
+        ]
+      },
+      "treatment": {
+        "medications": [
+          "albuterol",
+          "prednisone"
+        ],
+        "procedures": [
+          "nebulizer treatment"
+        ],
+        "sequence": [
+          "oxygen therapy",
+          "albuterol",
+          "prednisone"
+        ]
+      },
+      "outcome": {
+        "disposition": "admitted",
+        "length_of_stay": 2,
+        "mortality": false,
+        "readmission": false
+      },
+      "temporal_data": {
+        "arrival_to_diagnosis": 45,
+        "diagnosis_to_treatment": 20,
+        "treatment_to_discharge": 120
+      },
+      "metadata": {}
+    },
+    {
+      "demographics": {
+        "patient_id": "anon_3317c061",
+        "age": 20,
+        "gender": "male",
+        "race": "hispanic",
+        "ethnicity": "hispanic",
+        "insurance": "medicaid"
+      },
+      "presentation": {
+        "chief_complaint": "right lower quadrant pain for 12 hours",
+        "symptoms": [
+          "abdominal pain",
+          "nausea",
+          "decreased appetite"
+        ],
+        "vital_signs": {
+          "heart_rate": 100,
+          "bp_systolic": 130,
+          "bp_diastolic": 80,
+          "respiratory_rate": 18,
+          "oxygen_saturation": 98,
+          "temperature": 100.8
+        },
+        "arrival_time": "2024-01-15"
+      },
+      "diagnosis": {
+        "primary": "appendicitis",
+        "secondary": [],
+        "icd_codes": [
+          "K35.90"
+        ]
+      },
+      "treatment": {
+        "medications": [
+          "morphine",
+          "ceftriaxone"
+        ],
+        "procedures": [
+          "appendectomy"
+        ],
+        "sequence": [
+          "pain medication",
+          "antibiotics",
+          "appendectomy"
+        ]
+      },
+      "outcome": {
+        "disposition": "admitted",
+        "length_of_stay": 1,
+        "mortality": false,
+        "readmission": false
+      },
+      "temporal_data": {
+        "arrival_to_diagnosis": 60,
+        "diagnosis_to_treatment": 30,
+        "treatment_to_discharge": 90
+      },
+      "metadata": {}
+    }
+  ]
+}

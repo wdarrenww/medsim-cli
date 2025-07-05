@@ -1,0 +1,206 @@
+{
+  "patterns": [],
+  "clusters": [
+    {
+      "cluster_id": "cluster_2",
+      "patterns": [
+        {
+          "pattern_id": "symptom_cluster_0",
+          "pattern_type": "symptom_cluster",
+          "frequency": 0.3333333333333333,
+          "confidence": 1.0,
+          "characteristics": {
+            "symptoms": [
+              "chest pain",
+              "shortness of breath",
+              "sweating"
+            ],
+            "symptom_count": 3,
+            "avg_symptoms_per_case": 3
+          },
+          "examples": [
+            "Cluster with 1 occurrences"
+          ],
+          "metadata": {}
+        },
+        {
+          "pattern_id": "symptom_cluster_1",
+          "pattern_type": "symptom_cluster",
+          "frequency": 0.3333333333333333,
+          "confidence": 1.0,
+          "characteristics": {
+            "symptoms": [
+              "cough",
+              "shortness of breath",
+              "wheezing"
+            ],
+            "symptom_count": 3,
+            "avg_symptoms_per_case": 3
+          },
+          "examples": [
+            "Cluster with 1 occurrences"
+          ],
+          "metadata": {}
+        },
+        {
+          "pattern_id": "symptom_cluster_2",
+          "pattern_type": "symptom_cluster",
+          "frequency": 0.3333333333333333,
+          "confidence": 1.0,
+          "characteristics": {
+            "symptoms": [
+              "abdominal pain",
+              "decreased appetite",
+              "nausea"
+            ],
+            "symptom_count": 3,
+            "avg_symptoms_per_case": 3
+          },
+          "examples": [
+            "Cluster with 1 occurrences"
+          ],
+          "metadata": {}
+        }
+      ],
+      "centroid": [
+        0.33333333333333337,
+        1.0,
+        3.0,
+        0.0,
+        0.0
+      ],
+      "size": 3,
+      "specialty": "general",
+      "difficulty_level": "easy"
+    },
+    {
+      "cluster_id": "cluster_0",
+      "patterns": [
+        {
+          "pattern_id": "treatment_sequence_0",
+          "pattern_type": "treatment_sequence",
+          "frequency": 0.3333333333333333,
+          "confidence": 1.0,
+          "characteristics": {
+            "treatment_sequence": [
+              "aspirin",
+              "nitroglycerin",
+              "cardiac catheterization"
+            ],
+            "sequence_length": 3,
+            "common_treatments": [
+              "cardiac catheterization",
+              "nitroglycerin",
+              "aspirin"
+            ]
+          },
+          "examples": [
+            "Sequence with 1 occurrences"
+          ],
+          "metadata": {}
+        },
+        {
+          "pattern_id": "treatment_sequence_1",
+          "pattern_type": "treatment_sequence",
+          "frequency": 0.3333333333333333,
+          "confidence": 1.0,
+          "characteristics": {
+            "treatment_sequence": [
+              "oxygen therapy",
+              "albuterol",
+              "prednisone"
+            ],
+            "sequence_length": 3,
+            "common_treatments": [
+              "prednisone",
+              "albuterol",
+              "oxygen therapy"
+            ]
+          },
+          "examples": [
+            "Sequence with 1 occurrences"
+          ],
+          "metadata": {}
+        },
+        {
+          "pattern_id": "treatment_sequence_2",
+          "pattern_type": "treatment_sequence",
+          "frequency": 0.3333333333333333,
+          "confidence": 1.0,
+          "characteristics": {
+            "treatment_sequence": [
+              "pain medication",
+              "antibiotics",
+              "appendectomy"
+            ],
+            "sequence_length": 3,
+            "common_treatments": [
+              "antibiotics",
+              "pain medication",
+              "appendectomy"
+            ]
+          },
+          "examples": [
+            "Sequence with 1 occurrences"
+          ],
+          "metadata": {}
+        }
+      ],
+      "centroid": [
+        0.33333333333333337,
+        1.0,
+        3.0,
+        0.0,
+        0.3
+      ],
+      "size": 3,
+      "specialty": "general",
+      "difficulty_level": "easy"
+    },
+    {
+      "cluster_id": "cluster_1",
+      "patterns": [
+        {
+          "pattern_id": "temporal_arrival_diagnosis",
+          "pattern_type": "temporal_pattern",
+          "frequency": 1.0,
+          "confidence": 0.8,
+          "characteristics": {
+            "avg_arrival_to_diagnosis": 45.0,
+            "std_arrival_to_diagnosis": 12.24744871391589,
+            "median_arrival_to_diagnosis": 45.0
+          },
+          "examples": [
+            "Time from arrival to diagnosis patterns"
+          ],
+          "metadata": {}
+        },
+        {
+          "pattern_id": "temporal_diagnosis_treatment",
+          "pattern_type": "temporal_pattern",
+          "frequency": 1.0,
+          "confidence": 0.8,
+          "characteristics": {
+            "avg_diagnosis_to_treatment": 21.666666666666668,
+            "std_diagnosis_to_treatment": 6.236095644623235,
+            "median_diagnosis_to_treatment": 20.0
+          },
+          "examples": [
+            "Time from diagnosis to treatment patterns"
+          ],
+          "metadata": {}
+        }
+      ],
+      "centroid": [
+        1.0,
+        0.8,
+        3.0,
+        0.0,
+        0.0
+      ],
+      "size": 2,
+      "specialty": "general",
+      "difficulty_level": "easy"
+    }
+  ]
+}
