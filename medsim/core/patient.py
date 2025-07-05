@@ -288,7 +288,7 @@ class EnhancedPatientProfile:
         }
 
 class PatientProfileGenerator:
-    """generates realistic patient profiles"""
+    """generates realistic patient profiles with pattern-driven logic"""
     
     def __init__(self):
         self.names = {
@@ -308,6 +308,56 @@ class PatientProfileGenerator:
         self.marital_statuses = [
             "Single", "Married", "Divorced", "Widowed", "Separated"
         ]
+        
+        # specialty-specific demographics distributions
+        self.specialty_demographics = {
+            "emergency_medicine": {
+                "age_ranges": [(18, 45), (45, 65), (65, 85)],
+                "age_weights": [0.4, 0.4, 0.2],
+                "gender_distribution": {"male": 0.52, "female": 0.48},
+                "common_conditions": ["trauma", "cardiac", "respiratory", "neurological"]
+            },
+            "cardiology": {
+                "age_ranges": [(45, 65), (65, 85), (85, 95)],
+                "age_weights": [0.3, 0.5, 0.2],
+                "gender_distribution": {"male": 0.55, "female": 0.45},
+                "common_conditions": ["hypertension", "diabetes", "hyperlipidemia", "heart_disease"]
+            },
+            "pediatrics": {
+                "age_ranges": [(0, 2), (2, 12), (12, 18)],
+                "age_weights": [0.3, 0.5, 0.2],
+                "gender_distribution": {"male": 0.51, "female": 0.49},
+                "common_conditions": ["respiratory", "fever", "gastroenteritis", "trauma"]
+            },
+            "geriatrics": {
+                "age_ranges": [(65, 75), (75, 85), (85, 95)],
+                "age_weights": [0.4, 0.4, 0.2],
+                "gender_distribution": {"male": 0.45, "female": 0.55},
+                "common_conditions": ["dementia", "falls", "polypharmacy", "frailty"]
+            }
+        }
+        
+        # difficulty-based characteristics
+        self.difficulty_characteristics = {
+            "easy": {
+                "symptom_clarity": 0.9,
+                "diagnostic_obviousness": 0.8,
+                "comorbidity_complexity": 0.3,
+                "social_factors": 0.2
+            },
+            "medium": {
+                "symptom_clarity": 0.7,
+                "diagnostic_obviousness": 0.6,
+                "comorbidity_complexity": 0.5,
+                "social_factors": 0.4
+            },
+            "hard": {
+                "symptom_clarity": 0.4,
+                "diagnostic_obviousness": 0.3,
+                "comorbidity_complexity": 0.8,
+                "social_factors": 0.7
+            }
+        }
     
     def generate_patient(self, age: Optional[int] = None, gender: Optional[str] = None) -> EnhancedPatientProfile:
         """generate a realistic patient profile"""
@@ -384,6 +434,168 @@ class PatientProfileGenerator:
             patient.family_history.conditions.append("Heart Disease")
         
         return patient
+    
+    def generate_patient_from_pattern(self, pattern: Dict[str, Any], difficulty: str = "medium") -> EnhancedPatientProfile:
+        """generate patient profile based on clinical pattern"""
+        pattern_data = pattern.get('pattern_data', {})
+        demographics = pattern_data.get('demographics', {})
+        
+        # determine age from pattern
+        age_range = demographics.get('age_range', (30, 70))
+        age = random.randint(age_range[0], age_range[1])
+        
+        # determine gender from pattern
+        gender_dist = demographics.get('gender_distribution', {'male': 0.5, 'female': 0.5})
+        gender = random.choices(list(gender_dist.keys()), weights=list(gender_dist.values()))[0]
+        
+        # generate base patient
+        patient = self.generate_patient(age, gender)
+        
+        # apply pattern-specific characteristics
+        self._apply_pattern_characteristics(patient, pattern_data, difficulty)
+        
+        return patient
+    
+    def generate_patient_by_specialty(self, specialty: str, difficulty: str = "medium") -> EnhancedPatientProfile:
+        """generate patient profile optimized for specific specialty"""
+        if specialty not in self.specialty_demographics:
+            # fallback to general patient generation
+            return self.generate_patient()
+        
+        specialty_demo = self.specialty_demographics[specialty]
+        
+        # select age range based on specialty
+        age_range_idx = random.choices(
+            range(len(specialty_demo['age_ranges'])), 
+            weights=specialty_demo['age_weights']
+        )[0]
+        age_range = specialty_demo['age_ranges'][age_range_idx]
+        age = random.randint(age_range[0], age_range[1])
+        
+        # select gender based on specialty distribution
+        gender = random.choices(
+            list(specialty_demo['gender_distribution'].keys()),
+            weights=list(specialty_demo['gender_distribution'].values())
+        )[0]
+        
+        # generate base patient
+        patient = self.generate_patient(age, gender)
+        
+        # apply specialty-specific characteristics
+        self._apply_specialty_characteristics(patient, specialty, difficulty)
+        
+        return patient
+    
+    def generate_patient_by_difficulty(self, difficulty: str, specialty: Optional[str] = None) -> EnhancedPatientProfile:
+        """generate patient profile with difficulty-appropriate characteristics"""
+        if specialty:
+            patient = self.generate_patient_by_specialty(specialty, difficulty)
+        else:
+            patient = self.generate_patient()
+        
+        # apply difficulty-specific characteristics
+        self._apply_difficulty_characteristics(patient, difficulty)
+        
+        return patient
+    
+    def _apply_pattern_characteristics(self, patient: EnhancedPatientProfile, pattern_data: Dict[str, Any], difficulty: str):
+        """apply pattern-specific characteristics to patient"""
+        # add risk factors from pattern
+        risk_factors = pattern_data.get('risk_factors', [])
+        for risk in risk_factors:
+            if risk == "hypertension":
+                patient.conditions.append("Hypertension")
+            elif risk == "diabetes":
+                patient.conditions.append("Diabetes")
+            elif risk == "smoking":
+                patient.lifestyle_factors.smoking_status = "current"
+            elif risk == "hyperlipidemia":
+                patient.conditions.append("Hyperlipidemia")
+        
+        # adjust symptoms based on pattern
+        symptom_clusters = pattern_data.get('symptom_clusters', [])
+        if symptom_clusters:
+            selected_cluster = random.choice(symptom_clusters)
+            patient.symptoms = selected_cluster.get('symptoms', [])
+        
+        # adjust personality based on difficulty
+        if difficulty == "hard":
+            # make communication more challenging
+            patient.personality.communication_style = random.choice(["indirect", "confused", "uncooperative"])
+            patient.personality.health_literacy = "low"
+        elif difficulty == "easy":
+            # make communication clear
+            patient.personality.communication_style = "direct"
+            patient.personality.health_literacy = "high"
+    
+    def _apply_specialty_characteristics(self, patient: EnhancedPatientProfile, specialty: str, difficulty: str):
+        """apply specialty-specific characteristics to patient"""
+        specialty_demo = self.specialty_demographics[specialty]
+        
+        # add specialty-specific conditions
+        common_conditions = specialty_demo.get('common_conditions', [])
+        for condition in common_conditions:
+            if random.random() < 0.3:  # 30% chance per condition
+                patient.conditions.append(condition)
+        
+        # adjust social factors based on specialty
+        if specialty == "geriatrics":
+            patient.social_history.occupation = "Retired"
+            patient.social_history.marital_status = random.choice(["Widowed", "Married", "Single"])
+            if random.random() < 0.4:
+                patient.social_history.social_determinants.append(SocialDeterminant.SOCIAL_ISOLATION)
+        
+        elif specialty == "pediatrics":
+            patient.social_history.occupation = "Student" if patient.age > 5 else "Preschool"
+            patient.social_history.marital_status = "Single"
+            patient.personality.personality_type = random.choice([PersonalityType.EXTROVERT, PersonalityType.INTROVERT])
+        
+        elif specialty == "cardiology":
+            # add cardiac risk factors
+            if random.random() < 0.6:
+                patient.family_history.conditions.append("Heart Disease")
+            if random.random() < 0.5:
+                patient.lifestyle_factors.smoking_status = "former"
+    
+    def _apply_difficulty_characteristics(self, patient: EnhancedPatientProfile, difficulty: str):
+        """apply difficulty-specific characteristics to patient"""
+        if difficulty not in self.difficulty_characteristics:
+            return
+        
+        diff_chars = self.difficulty_characteristics[difficulty]
+        
+        # adjust symptom clarity
+        if diff_chars['symptom_clarity'] < 0.5:
+            # make symptoms less clear
+            patient.symptoms = [f"vague {symptom}" for symptom in patient.symptoms]
+            patient.personality.communication_style = "indirect"
+        
+        # adjust diagnostic obviousness
+        if diff_chars['diagnostic_obviousness'] < 0.5:
+            # add confounding symptoms
+            confounding_symptoms = ["fatigue", "nausea", "dizziness", "anxiety"]
+            patient.symptoms.extend(random.sample(confounding_symptoms, 2))
+        
+        # adjust comorbidity complexity
+        if diff_chars['comorbidity_complexity'] > 0.6:
+            # add multiple comorbidities
+            comorbidities = ["Hypertension", "Diabetes", "COPD", "Depression", "Obesity"]
+            for comorbidity in random.sample(comorbidities, 2):
+                if comorbidity not in patient.conditions:
+                    patient.conditions.append(comorbidity)
+        
+        # adjust social factors
+        if diff_chars['social_factors'] > 0.5:
+            # add challenging social determinants
+            challenging_determinants = [
+                SocialDeterminant.POVERTY,
+                SocialDeterminant.LANGUAGE_BARRIERS,
+                SocialDeterminant.TRANSPORTATION_BARRIERS,
+                SocialDeterminant.SOCIAL_ISOLATION
+            ]
+            for determinant in random.sample(challenging_determinants, 2):
+                if determinant not in patient.social_history.social_determinants:
+                    patient.social_history.social_determinants.append(determinant)
     
     def generate_pediatric_patient(self, age: Optional[int] = None) -> EnhancedPatientProfile:
         """generate a pediatric patient profile"""

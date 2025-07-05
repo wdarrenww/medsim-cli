@@ -18,16 +18,18 @@ from rich.live import Live
 from rich.align import Align
 from rich.columns import Columns
 from rich.console import Group
+import time
 
 from ..core.physiology import EnhancedPhysiologicalEngine, DiscoveryMethod, OrganSystem, DiseaseState
 from ..core.diagnostics import EnhancedDiagnosticSystem, TestCategory, ImagingModality
 from ..core.treatments import EnhancedTreatmentEngine, DrugCategory, Route, InteractionSeverity
 from ..core.dialogue import EnhancedDialogueEngine, EmotionalState, CommunicationStyle, PainLevel
-from ..core.symptoms import SymptomLibrary
-from ..core.session import GlobalCLISession
+from ..core.symptoms import ComprehensiveSymptomLibrary as SymptomLibrary
+from ..core.session import MultiPatientSessionManager
+from ..core.continuous_simulation_engine import ContinuousSimulationEngine, SimulationState
 
 # initialize global session
-cli_session = GlobalCLISession()
+cli_session = MultiPatientSessionManager()
 
 # initialize engines
 physio_engine = EnhancedPhysiologicalEngine()
@@ -35,6 +37,9 @@ diagnostic_engine = EnhancedDiagnosticSystem()
 treatment_engine = EnhancedTreatmentEngine()
 dialogue_engine = EnhancedDialogueEngine()
 symptom_library = SymptomLibrary()
+
+# initialize continuous simulation engine
+continuous_engine = ContinuousSimulationEngine()
 
 console = Console()
 app = typer.Typer(help="Enhanced Medical Simulation CLI")
@@ -615,6 +620,14 @@ def show_help():
     help_text = """
 [bold]Enhanced Medical Simulation CLI[/bold]
 
+[bold]Continuous Simulation:[/bold]
+• start-simulation: Start continuous simulation loop
+• pause-simulation: Pause continuous simulation
+• resume-simulation: Resume continuous simulation
+• stop-simulation: Stop continuous simulation
+• show-simulation-status: Show current simulation status
+• show-simulation-metrics: Show simulation metrics
+
 [bold]Patient Management:[/bold]
 • create-patient: Create a new patient profile
 • discover-info: Discover patient information (BMI, medical history, etc.)
@@ -647,6 +660,7 @@ def show_help():
 • search-library: Search medical libraries
 
 [bold]Examples:[/bold]
+• Start simulation: start-simulation --duration 4 --speed 2.0 --arrival-rate 3.0
 • Create patient: create-patient --id P001 --name "John Doe" --age 45 --gender male --height 175 --weight 80
 • Update vitals: update-vitals --hr 85 --sbp 140 --dbp 90
 • Order lab: order-lab --test cbc
@@ -657,5 +671,145 @@ def show_help():
     console.print(Panel(help_text, title="Help", border_style="blue"))
 
 
+@app.command()
+def start_simulation(
+    duration_hours: Optional[float] = typer.Option(None, "--duration", "-d", help="Simulation duration in hours"),
+    time_acceleration: float = typer.Option(1.0, "--speed", "-s", help="Time acceleration factor (1.0 = real time)"),
+    arrival_rate: float = typer.Option(2.5, "--arrival-rate", "-a", help="Patient arrival rate per hour"),
+    max_patients: int = typer.Option(3, "--max-patients", "-m", help="Maximum simultaneous patients")
+):
+    """start continuous simulation loop"""
+    # configure simulation engine
+    continuous_engine.max_simultaneous_patients = max_patients
+    continuous_engine.arrival_rate_per_hour = arrival_rate
+    continuous_engine.time_acceleration = time_acceleration
+    
+    # add event callback for real-time updates
+    def event_callback(event):
+        console.print(f"[blue]{event.timestamp.strftime('%H:%M:%S')} - {event.description}[/blue]")
+    
+    continuous_engine.add_event_callback(event_callback)
+    
+    # start simulation
+    console.print(f"[green]Starting continuous simulation...[/green]")
+    console.print(f"[yellow]Duration: {duration_hours or '24'} hours[/yellow]")
+    console.print(f"[yellow]Time acceleration: {time_acceleration}x[/yellow]")
+    console.print(f"[yellow]Arrival rate: {arrival_rate} patients/hour[/yellow]")
+    console.print(f"[yellow]Max patients: {max_patients}[/yellow]")
+    
+    continuous_engine.start_simulation(duration_hours)
+    
+    # monitor simulation
+    try:
+        while continuous_engine.state == SimulationState.RUNNING:
+            status = continuous_engine.get_simulation_status()
+            
+            # display current status with real-time updates
+            console.print(f"\n[bold]Simulation Status:[/bold]")
+            console.print(f"Active patients: {status['queue_status']['active_count']}")
+            console.print(f"Waiting patients: {status['queue_status']['waiting_count']}")
+            console.print(f"Completed patients: {status['queue_status']['completed_count']}")
+            console.print(f"Available slots: {status['queue_status']['available_slots']}")
+            console.print(f"Simulation time: {status['metrics']['total_simulation_time']}")
+            console.print(f"Current time: {status['current_time'].strftime('%H:%M:%S')}")
+            
+            # show recent events
+            recent_events = continuous_engine.get_recent_events(5)
+            if recent_events:
+                console.print(f"\n[bold]Recent Events:[/bold]")
+                for event in recent_events:
+                    console.print(f"• {event.description}")
+            
+            time.sleep(2)  # update every 2 seconds for more responsive display
+            
+    except KeyboardInterrupt:
+        console.print(f"\n[yellow]Stopping simulation...[/yellow]")
+        continuous_engine.stop_simulation_engine()
+    
+    # show final metrics
+    metrics = continuous_engine.get_simulation_metrics()
+    console.print(f"\n[bold]Simulation Complete![/bold]")
+    console.print(f"Total patients processed: {metrics.total_patients_processed}")
+    console.print(f"Total simulation time: {metrics.total_simulation_time}")
+    console.print(f"Average patients per hour: {metrics.average_patients_per_hour:.1f}")
+
+
+@app.command()
+def pause_simulation():
+    """pause continuous simulation"""
+    if continuous_engine.state == SimulationState.RUNNING:
+        continuous_engine.pause_simulation()
+        console.print("[yellow]Simulation paused[/yellow]")
+    else:
+        console.print("[red]No running simulation to pause[/red]")
+
+
+@app.command()
+def resume_simulation():
+    """resume continuous simulation"""
+    if continuous_engine.state == SimulationState.PAUSED:
+        continuous_engine.resume_simulation()
+        console.print("[green]Simulation resumed[/green]")
+    else:
+        console.print("[red]No paused simulation to resume[/red]")
+
+
+@app.command()
+def stop_simulation():
+    """stop continuous simulation"""
+    if continuous_engine.state in [SimulationState.RUNNING, SimulationState.PAUSED]:
+        continuous_engine.stop_simulation_engine()
+        console.print("[red]Simulation stopped[/red]")
+    else:
+        console.print("[red]No running simulation to stop[/red]")
+
+
+@app.command()
+def show_simulation_status():
+    """show current simulation status"""
+    status = continuous_engine.get_simulation_status()
+    
+    console.print(f"[bold]Simulation Status:[/bold]")
+    console.print(f"State: {status['state']}")
+    console.print(f"Active patients: {status['queue_status']['active_count']}")
+    console.print(f"Waiting patients: {status['queue_status']['waiting_count']}")
+    console.print(f"Completed patients: {status['queue_status']['completed_count']}")
+    console.print(f"Available slots: {status['queue_status']['available_slots']}")
+    console.print(f"Simulation time: {status['metrics']['total_simulation_time']}")
+    console.print(f"Total events: {status['total_events']}")
+    
+    if status['queue_status']['active_count'] > 0:
+        console.print(f"\n[bold]Active Patients:[/bold]")
+        for patient in status['queue_status']['active_patients']:
+            console.print(f"• {patient.patient_id}: {patient.patient_result.patient.name} - {patient.specialty_needed}")
+
+
+@app.command()
+def show_simulation_metrics():
+    """show simulation metrics"""
+    metrics = continuous_engine.get_simulation_metrics()
+    
+    console.print(f"[bold]Simulation Metrics:[/bold]")
+    console.print(f"Total patients processed: {metrics.total_patients_processed}")
+    console.print(f"Total simulation time: {metrics.total_simulation_time}")
+    console.print(f"Average patients per hour: {metrics.average_patients_per_hour:.1f}")
+    console.print(f"Average wait time: {metrics.average_wait_time}")
+    console.print(f"Average completion time: {metrics.average_completion_time}")
+    
+    if metrics.specialty_distribution:
+        console.print(f"\n[bold]Specialty Distribution:[/bold]")
+        for specialty, count in metrics.specialty_distribution.items():
+            console.print(f"• {specialty}: {count}")
+    
+    if metrics.complexity_distribution:
+        console.print(f"\n[bold]Complexity Distribution:[/bold]")
+        for complexity, count in metrics.complexity_distribution.items():
+            console.print(f"• {complexity}: {count}")
+
+
+def main():
+    """main entry point for the CLI"""
+    app()
+
 if __name__ == "__main__":
-    app() 
+    main() 

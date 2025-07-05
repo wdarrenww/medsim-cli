@@ -569,146 +569,222 @@ class ComprehensiveSymptomLibrary:
         symptoms["joint_pain"] = Symptom(
             name="Joint Pain",
             category=SymptomCategory.MUSCULOSKELETAL,
-            description="Pain in or around joints",
+            description="Pain, stiffness, or discomfort in one or more joints",
             severity=SymptomSeverity.MODERATE,
-            associated_conditions=["arthritis", "gout", "bursitis", "tendonitis"],
-            differential_diagnosis=["overuse", "injury", "infection", "autoimmune disease"],
-            red_flags=["severe pain", "swelling", "redness", "fever"],
-            common_causes=["overuse", "injury", "aging", "inflammation"],
-            typical_duration="days to weeks",
-            aggravating_factors=["movement", "weight bearing", "cold weather"],
-            relieving_factors=["rest", "ice", "heat", "anti-inflammatory medications"],
-            associated_symptoms=["stiffness", "swelling", "reduced range of motion"],
+            associated_conditions=["osteoarthritis", "rheumatoid arthritis", "gout", "lupus"],
+            differential_diagnosis=["bursitis", "tendinitis", "infection", "trauma"],
+            red_flags=["red, hot, swollen joint", "fever", "inability to move joint"],
+            common_causes=["degeneration", "inflammation", "injury"],
+            typical_duration="variable",
+            aggravating_factors=["movement", "weight-bearing"],
+            relieving_factors=["rest", "ice", "NSAIDs"],
+            associated_symptoms=["swelling", "stiffness", "warmth"],
             discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
-            discovery_difficulty=0.2,
-            requires_specific_exam=True,
-            typical_onset="variable",
-            progression_pattern="variable",
-            exam_findings={
-                "tenderness": "may be present",
-                "swelling": "may be present",
-                "range_of_motion": "may be decreased",
-                "crepitus": "may be present"
-            },
-            vital_sign_changes={
-                "temperature": (0.5, 2.0)
-            },
-            lab_correlates=["esr", "crp", "uric_acid", "rheumatoid_factor"],
-            imaging_correlates=["joint_xray", "joint_mri"]
-        )
-        
-        symptoms["back_pain"] = Symptom(
-            name="Back Pain",
-            category=SymptomCategory.MUSCULOSKELETAL,
-            description="Pain in the back, usually lower back",
-            severity=SymptomSeverity.MODERATE,
-            associated_conditions=["herniated disc", "muscle strain", "spinal stenosis", "arthritis"],
-            differential_diagnosis=["kidney stone", "infection", "tumor", "referred pain"],
-            red_flags=["saddle anesthesia", "bowel/bladder dysfunction", "fever", "weight loss"],
-            common_causes=["muscle strain", "poor posture", "lifting", "aging"],
-            typical_duration="days to weeks",
-            aggravating_factors=["lifting", "bending", "sitting", "standing"],
-            relieving_factors=["rest", "heat", "ice", "exercise", "physical therapy"],
-            associated_symptoms=["stiffness", "muscle spasms", "radiating pain"],
-            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
-            discovery_difficulty=0.2,
-            requires_specific_exam=True,
-            typical_onset="variable",
-            progression_pattern="variable",
-            exam_findings={
-                "tenderness": "may be present",
-                "range_of_motion": "may be decreased",
-                "straight_leg_raise": "may be positive",
-                "motor_strength": "may be decreased"
-            },
-            vital_sign_changes={},
-            lab_correlates=["esr", "crp"],
-            imaging_correlates=["spine_xray", "spine_mri"]
-        )
-        
-        # constitutional symptoms
-        symptoms["fever"] = Symptom(
-            name="Fever",
-            category=SymptomCategory.CONSTITUTIONAL,
-            description="Elevated body temperature above normal",
-            severity=SymptomSeverity.MODERATE,
-            associated_conditions=["infection", "inflammation", "cancer", "autoimmune disease"],
-            differential_diagnosis=["heat exposure", "medication side effect", "exercise"],
-            red_flags=["high fever", "altered mental status", "severe headache", "neck stiffness"],
-            common_causes=["infection", "inflammation", "medications", "heat exposure"],
-            typical_duration="days",
-            aggravating_factors=["infection", "inflammation", "dehydration"],
-            relieving_factors=["antipyretics", "cooling", "hydration", "treating cause"],
-            associated_symptoms=["chills", "sweating", "headache", "body aches"],
-            discovery_methods=[DiscoveryMethod.VITAL_SIGNS, DiscoveryMethod.PATIENT_REPORTED],
-            discovery_difficulty=0.1,
-            requires_specific_exam=False,
-            typical_onset="variable",
-            progression_pattern="variable",
-            exam_findings={
-                "temperature": "elevated",
-                "skin": "may be warm and flushed"
-            },
-            vital_sign_changes={
-                "temperature": (2.0, 5.0),
-                "heart_rate": (10, 25)
-            },
-            lab_correlates=["cbc", "blood_culture", "urinalysis"],
-            imaging_correlates=["chest_xray"]
-        )
-        
-        symptoms["fatigue"] = Symptom(
-            name="Fatigue",
-            category=SymptomCategory.CONSTITUTIONAL,
-            description="Extreme tiredness or lack of energy",
-            severity=SymptomSeverity.MILD,
-            associated_conditions=["anemia", "hypothyroidism", "depression", "sleep apnea"],
-            differential_diagnosis=["lack of sleep", "stress", "deconditioning", "medication side effect"],
-            red_flags=["weight loss", "fever", "night sweats", "shortness of breath"],
-            common_causes=["lack of sleep", "stress", "anemia", "depression"],
-            typical_duration="days to weeks",
-            aggravating_factors=["lack of sleep", "stress", "poor nutrition", "sedentary lifestyle"],
-            relieving_factors=["adequate sleep", "exercise", "good nutrition", "stress management"],
-            associated_symptoms=["weakness", "difficulty concentrating", "mood changes", "sleep problems"],
-            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED],
             discovery_difficulty=0.3,
-            requires_specific_exam=False,
+            requires_specific_exam=True,
             typical_onset="gradual",
-            progression_pattern="variable",
+            progression_pattern="worsening",
             exam_findings={
-                "general_appearance": "may appear tired",
-                "pallor": "may be present in anemia"
+                "swelling": "may be present",
+                "warmth": "may be present",
+                "range_of_motion": "may be decreased"
             },
             vital_sign_changes={},
-            lab_correlates=["cbc", "thyroid_function", "glucose"],
+            lab_correlates=["cbc", "esr", "crp", "rheumatoid_factor"],
+            imaging_correlates=["joint_xray", "mri"]
+        )
+
+        # dermatological symptoms
+        symptoms["rash"] = Symptom(
+            name="Rash",
+            category=SymptomCategory.DERMATOLOGICAL,
+            description="Change in skin color, texture, or appearance",
+            severity=SymptomSeverity.MILD,
+            associated_conditions=["allergic reaction", "infection", "autoimmune disease", "drug reaction"],
+            differential_diagnosis=["eczema", "psoriasis", "urticaria", "contact dermatitis"],
+            red_flags=["rapidly spreading", "blistering", "mucosal involvement", "systemic symptoms"],
+            common_causes=["allergy", "infection", "irritant"],
+            typical_duration="days to weeks",
+            aggravating_factors=["heat", "friction", "allergens"],
+            relieving_factors=["antihistamines", "topical steroids", "avoiding triggers"],
+            associated_symptoms=["itching", "swelling", "pain"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.2,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="fluctuating",
+            exam_findings={
+                "distribution": "may be localized or generalized",
+                "morphology": "macular, papular, vesicular, etc.",
+                "blanching": "may or may not blanch"
+            },
+            vital_sign_changes={},
+            lab_correlates=["cbc", "skin_biopsy"],
             imaging_correlates=[]
         )
-        
-        symptoms["weight_loss"] = Symptom(
-            name="Weight Loss",
-            category=SymptomCategory.CONSTITUTIONAL,
-            description="Unintentional loss of body weight",
-            severity=SymptomSeverity.MODERATE,
-            associated_conditions=["cancer", "hyperthyroidism", "diabetes", "depression"],
-            differential_diagnosis=["dietary changes", "increased activity", "medication side effect"],
-            red_flags=["rapid loss", "fever", "night sweats", "pain"],
-            common_causes=["dietary changes", "increased activity", "stress", "medications"],
-            typical_duration="weeks to months",
-            aggravating_factors=["poor appetite", "nausea", "diarrhea", "stress"],
-            relieving_factors=["adequate nutrition", "treating underlying cause"],
-            associated_symptoms=["fatigue", "weakness", "poor appetite", "night sweats"],
-            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.OBSERVATION],
-            discovery_difficulty=0.4,
+
+        # genitourinary symptoms
+        symptoms["dysuria"] = Symptom(
+            name="Dysuria",
+            category=SymptomCategory.GENITOURINARY,
+            description="Pain or burning sensation during urination",
+            severity=SymptomSeverity.MILD,
+            associated_conditions=["urinary tract infection", "sexually transmitted infection", "bladder stones"],
+            differential_diagnosis=["vaginitis", "prostatitis", "urethritis"],
+            red_flags=["fever", "flank pain", "hematuria", "urinary retention"],
+            common_causes=["infection", "irritation", "trauma"],
+            typical_duration="days",
+            aggravating_factors=["urination"],
+            relieving_factors=["hydration", "antibiotics"],
+            associated_symptoms=["frequency", "urgency", "hematuria"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.1,
             requires_specific_exam=False,
-            typical_onset="gradual",
-            progression_pattern="variable",
+            typical_onset="sudden",
+            progression_pattern="worsening",
             exam_findings={
-                "general_appearance": "may appear thin",
-                "muscle_mass": "may be decreased"
+                "suprapubic_tenderness": "may be present",
+                "urethral_discharge": "may be present"
             },
             vital_sign_changes={},
-            lab_correlates=["thyroid_function", "glucose", "cancer_markers"],
-            imaging_correlates=["ct_scan", "pet_scan"]
+            lab_correlates=["urinalysis", "urine_culture"],
+            imaging_correlates=["renal_ultrasound"]
+        )
+
+        # endocrine symptoms
+        symptoms["polyuria"] = Symptom(
+            name="Polyuria",
+            category=SymptomCategory.ENDOCRINE,
+            description="Excessive urination, usually more than 3 liters per day",
+            severity=SymptomSeverity.MILD,
+            associated_conditions=["diabetes mellitus", "diabetes insipidus", "hypercalcemia"],
+            differential_diagnosis=["psychogenic polydipsia", "diuretic use"],
+            red_flags=["dehydration", "electrolyte imbalance", "altered mental status"],
+            common_causes=["diabetes", "excess fluid intake", "medications"],
+            typical_duration="variable",
+            aggravating_factors=["high fluid intake"],
+            relieving_factors=["treating underlying cause"],
+            associated_symptoms=["polydipsia", "nocturia", "dehydration"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.LAB_RESULTS],
+            discovery_difficulty=0.2,
+            requires_specific_exam=False,
+            typical_onset="gradual",
+            progression_pattern="worsening",
+            exam_findings={
+                "hydration_status": "may show signs of dehydration"
+            },
+            vital_sign_changes={},
+            lab_correlates=["glucose", "serum_osmolality", "urine_osmolality"],
+            imaging_correlates=[]
+        )
+
+        # hematological symptoms
+        symptoms["easy_bruising"] = Symptom(
+            name="Easy Bruising",
+            category=SymptomCategory.HEMATOLOGICAL,
+            description="Bruising with minimal or no trauma",
+            severity=SymptomSeverity.MILD,
+            associated_conditions=["thrombocytopenia", "hemophilia", "liver disease", "vitamin K deficiency"],
+            differential_diagnosis=["medication effect", "vasculitis", "aging"],
+            red_flags=["spontaneous bleeding", "large hematomas", "prolonged bleeding"],
+            common_causes=["low platelets", "clotting disorder", "medications"],
+            typical_duration="variable",
+            aggravating_factors=["trauma", "anticoagulants"],
+            relieving_factors=["treating underlying cause"],
+            associated_symptoms=["bleeding gums", "petechiae", "fatigue"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.2,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="fluctuating",
+            exam_findings={
+                "skin": "ecchymoses, petechiae, purpura",
+                "mucosa": "may show bleeding"
+            },
+            vital_sign_changes={},
+            lab_correlates=["cbc", "pt", "inr", "liver_function"],
+            imaging_correlates=[]
+        )
+
+        # psychiatric symptoms
+        symptoms["hallucinations"] = Symptom(
+            name="Hallucinations",
+            category=SymptomCategory.PSYCHIATRIC,
+            description="Perception of something that is not present (auditory, visual, tactile, etc.)",
+            severity=SymptomSeverity.SEVERE,
+            associated_conditions=["schizophrenia", "delirium", "substance intoxication", "dementia"],
+            differential_diagnosis=["mood disorder", "sleep deprivation", "neurological disease"],
+            red_flags=["command hallucinations", "suicidal ideation", "violent behavior"],
+            common_causes=["psychiatric illness", "drugs", "sleep deprivation"],
+            typical_duration="variable",
+            aggravating_factors=["stress", "substance use"],
+            relieving_factors=["antipsychotics", "sleep"],
+            associated_symptoms=["delusions", "paranoia", "disorganized thinking"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.OBSERVATION],
+            discovery_difficulty=0.4,
+            requires_specific_exam=True,
+            typical_onset="variable",
+            progression_pattern="fluctuating",
+            exam_findings={
+                "mental_status": "disorganized, distracted, responding to internal stimuli"
+            },
+            vital_sign_changes={},
+            lab_correlates=["toxicology_screen", "cbc", "metabolic_panel"],
+            imaging_correlates=["head_ct", "mri"]
+        )
+
+        # constitutional symptoms
+        symptoms["night_sweats"] = Symptom(
+            name="Night Sweats",
+            category=SymptomCategory.CONSTITUTIONAL,
+            description="Excessive sweating during sleep, often soaking clothes or sheets",
+            severity=SymptomSeverity.MODERATE,
+            associated_conditions=["tuberculosis", "lymphoma", "menopause", "infection"],
+            differential_diagnosis=["hyperthyroidism", "anxiety", "medication side effect"],
+            red_flags=["weight loss", "fever", "lymphadenopathy"],
+            common_causes=["infection", "malignancy", "hormonal changes"],
+            typical_duration="weeks to months",
+            aggravating_factors=["warm environment", "stress"],
+            relieving_factors=["cool environment", "treating underlying cause"],
+            associated_symptoms=["fever", "weight loss", "fatigue"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.OBSERVATION],
+            discovery_difficulty=0.2,
+            requires_specific_exam=False,
+            typical_onset="gradual",
+            progression_pattern="worsening",
+            exam_findings={
+                "skin": "may be clammy or moist after episode"
+            },
+            vital_sign_changes={},
+            lab_correlates=["cbc", "esr", "hiv_test"],
+            imaging_correlates=[]
+        )
+
+        # rare multi-system symptom
+        symptoms["erythromelalgia"] = Symptom(
+            name="Erythromelalgia",
+            category=SymptomCategory.GENERAL,
+            description="Episodes of burning pain, redness, and warmth in extremities, often triggered by heat or exercise",
+            severity=SymptomSeverity.MODERATE,
+            associated_conditions=["myeloproliferative disorders", "autoimmune disease", "neuropathy"],
+            differential_diagnosis=["cellulitis", "gout", "complex regional pain syndrome"],
+            red_flags=["ulceration", "severe pain", "loss of function"],
+            common_causes=["idiopathic", "secondary to hematologic disease"],
+            typical_duration="minutes to hours",
+            aggravating_factors=["heat", "exercise", "stress"],
+            relieving_factors=["cooling", "rest", "aspirin"],
+            associated_symptoms=["swelling", "numbness", "tingling"],
+            discovery_methods=[DiscoveryMethod.PATIENT_REPORTED, DiscoveryMethod.PHYSICAL_EXAM],
+            discovery_difficulty=0.5,
+            requires_specific_exam=True,
+            typical_onset="sudden",
+            progression_pattern="fluctuating",
+            exam_findings={
+                "skin": "red, warm, swollen extremity during episode"
+            },
+            vital_sign_changes={},
+            lab_correlates=["cbc", "platelet_count"],
+            imaging_correlates=[]
         )
         
         return symptoms

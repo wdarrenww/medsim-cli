@@ -332,8 +332,38 @@ class ClinicalPatterns:
                         {'treatment': 'hydration', 'frequency': 0.8, 'timing': 'immediate'}
                     ]
                 }
+            },
+            "rheumatology": {
+                "diagnoses": [
+                    {"diagnosis": "systemic lupus erythematosus", "prevalence": 0.02},
+                    {"diagnosis": "rheumatoid arthritis", "prevalence": 0.03},
+                    {"diagnosis": "vasculitis", "prevalence": 0.01}
+                ],
+                "symptoms": ["joint pain", "rash", "fatigue", "fever"],
+                "labs": ["ANA", "RF", "ESR", "CRP"],
+                "imaging": ["joint xray", "chest xray"]
+            },
+            "hematology": {
+                "diagnoses": [
+                    {"diagnosis": "sickle cell crisis", "prevalence": 0.01},
+                    {"diagnosis": "thrombotic thrombocytopenic purpura", "prevalence": 0.005}
+                ],
+                "symptoms": ["pain", "anemia", "jaundice", "petechiae"],
+                "labs": ["CBC", "LDH", "haptoglobin", "peripheral smear"],
+                "imaging": ["abdominal ultrasound"]
+            },
+            "infectious_disease": {
+                "diagnoses": [
+                    {"diagnosis": "tuberculosis", "prevalence": 0.01},
+                    {"diagnosis": "HIV/AIDS", "prevalence": 0.01},
+                    {"diagnosis": "malaria", "prevalence": 0.005}
+                ],
+                "symptoms": ["fever", "night sweats", "weight loss", "cough"],
+                "labs": ["HIV test", "TB quantiferon", "malaria smear"],
+                "imaging": ["chest xray", "CT scan"]
             }
         }
+        return self.pattern_library
     
     def get_patterns_by_specialty(self, specialty: str) -> Dict[str, Any]:
         """get patterns for specific specialty"""

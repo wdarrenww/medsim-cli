@@ -7,10 +7,10 @@ demonstrating all features including comprehensive libraries
 from medsim.core.simulation import MedicalSimulation, PatientState
 from medsim.core.symptoms import ComprehensiveSymptomLibrary, SymptomCategory
 from medsim.core.procedures import ComprehensiveProcedureLibrary, ProcedureCategory
-from medsim.core.diagnostics import AdvancedDiagnosticSystem
-from medsim.core.treatments import AdvancedTreatmentSystem
-from medsim.core.dialogue import AdvancedDialogueSystem
-from medsim.core.assessment import AdvancedAssessmentSystem
+from medsim.core.diagnostics import EnhancedDiagnosticSystem
+from medsim.core.treatments import EnhancedTreatmentEngine
+from medsim.core.dialogue import EnhancedDialogueEngine
+from medsim.assessment.performance import AssessmentSystem
 from medsim.core.session import SessionManager
 from medsim.scenarios.scenario_manager import ScenarioManager
 from medsim.core.monitoring import MonitoringSystem
@@ -67,7 +67,7 @@ def demonstrate_comprehensive_libraries():
     # diagnostic system
     print("\n🔬 DIAGNOSTIC SYSTEM")
     print("-" * 30)
-    diagnostic_system = AdvancedDiagnosticSystem()
+    diagnostic_system = EnhancedDiagnosticSystem()
     
     # get available lab tests
     lab_tests = diagnostic_system.get_available_lab_tests()
@@ -151,7 +151,7 @@ def demonstrate_advanced_simulation():
     print("\n💬 DIALOGUE SYSTEM")
     print("-" * 30)
     
-    dialogue_system = AdvancedDialogueSystem()
+    dialogue_system = EnhancedDialogueEngine()
     
     # simulate patient interaction
     response = dialogue_system.generate_response(
@@ -165,7 +165,7 @@ def demonstrate_advanced_simulation():
     print("\n📊 ASSESSMENT SYSTEM")
     print("-" * 30)
     
-    assessment_system = AdvancedAssessmentSystem()
+    assessment_system = AssessmentSystem()
     
     # record some actions
     assessment_system.record_action("ordered_troponin", "lab_test", 10)

@@ -1418,4 +1418,233 @@ class EnhancedPhysiologicalEngine:
         if patient_id:
             return [entry for entry in self.discovery_history if entry['patient_id'] == patient_id]
         else:
-            return self.discovery_history.copy() 
+            return self.discovery_history.copy()
+
+# --- organ system class stubs for modular physiological modeling ---
+
+class CardiovascularSystem:
+    """models basic cardiovascular parameters; extend as needed"""
+    def __init__(self):
+        # initialize key hemodynamic variables
+        self.heart_rate = 80.0
+        self.blood_pressure_systolic = 120.0
+        self.blood_pressure_diastolic = 80.0
+        self.mean_arterial_pressure = 93.0
+        self.cardiac_output = 5.0
+        self.stroke_volume = 70.0
+        self.ejection_fraction = 0.65
+        self.systemic_vascular_resistance = 1200.0
+        self.rhythm = "sinus"
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        # simple stress response; extend for realism
+        self.heart_rate += stress_level * 10
+        self.blood_pressure_systolic += stress_level * 5
+        self.blood_pressure_diastolic += stress_level * 3
+
+class RespiratorySystem:
+    """models basic respiratory parameters; extend as needed"""
+    def __init__(self):
+        self.respiratory_rate = 16.0
+        self.oxygen_saturation = 98.0
+        self.tidal_volume = 500.0
+        self.minute_ventilation = 8.0
+        self.vital_capacity = 4000.0
+        self.fev1 = 3500.0
+        self.pao2 = 95.0
+        self.paco2 = 40.0
+        self.ph = 7.4
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        self.respiratory_rate += stress_level * 2
+
+class RenalSystem:
+    """models basic renal parameters; extend as needed"""
+    def __init__(self):
+        self.urine_output = 50.0
+        self.glomerular_filtration_rate = 100.0
+        self.creatinine = 1.0
+        self.sodium = 140.0
+        self.potassium = 4.0
+        self.chloride = 100.0
+        self.bicarbonate = 24.0
+        self.bun = 14.0
+        self.ph = 7.4
+        self.base_excess = 0.0
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class EndocrineSystem:
+    def __init__(self):
+        self.blood_glucose = 100.0
+        self.cortisol = 10.0
+        self.hba1c = 5.0
+        self.insulin_level = 10.0
+        self.glucagon_level = 60.0
+        self.tsh = 2.0
+        self.free_t4 = 1.2
+        self.free_t3 = 3.0
+        self.aldosterone = 10.0
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class NeurologicalSystem:
+    def __init__(self):
+        self.glasgow_coma_scale = 15
+        self.consciousness_level = "alert"
+        self.motor_strength = {"right_arm": 5, "right_leg": 5, "left_arm": 5, "left_leg": 5}
+        self.attention = "normal"
+        self.hearing = "normal"
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class GastrointestinalSystem:
+    def __init__(self):
+        self.nausea = False
+        self.abdominal_pain = False
+        self.amylase = 40.0
+        self.lipase = 30.0
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class HematologicalSystem:
+    def __init__(self):
+        self.hemoglobin = 14.0
+        self.hematocrit = 42.0
+        self.red_blood_cell_count = 5.0
+        self.mcv = 90.0
+        self.mch = 30.0
+        self.mchc = 34.0
+        self.white_blood_cell_count = 7.0
+        self.neutrophils = 4.0
+        self.lymphocytes = 2.0
+        self.monocytes = 0.5
+        self.eosinophils = 0.2
+        self.basophils = 0.1
+        self.platelet_count = 250.0
+        self.pt = 12.0
+        self.inr = 1.0
+        self.ptt = 30.0
+        self.fibrinogen = 300.0
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class ImmuneSystem:
+    def __init__(self):
+        self.crp = 1.0
+        self.esr = 10.0
+        self.ferritin = 100.0
+        self.il6 = 2.0
+        self.tnf_alpha = 2.0
+        self.cd4_count = 800.0
+        self.cd8_count = 400.0
+        self.nk_cells = 200.0
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class HepaticSystem:
+    def __init__(self):
+        self.alt = 25.0
+        self.ast = 25.0
+        self.alkaline_phosphatase = 60.0
+        self.ggt = 20.0
+        self.total_bilirubin = 0.8
+        self.direct_bilirubin = 0.2
+        self.indirect_bilirubin = 0.6
+        self.albumin = 4.0
+        self.total_protein = 7.0
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class MusculoskeletalSystem:
+    def __init__(self):
+        self.pain = {"general": 0}
+        self.calcium = 9.5
+        self.vitamin_d = 50.0
+        self.conditions = []
+        self.disease_state = DiseaseState.NORMAL
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class DermatologicalSystem:
+    def __init__(self):
+        self.wounds = []
+        self.rashes = []
+        self.burns = []
+        self.turgor = "normal"
+        self.hydration = "normal"
+        self.conditions = []
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class ReproductiveSystem:
+    def __init__(self):
+        self.pregnancy_status = "not_pregnant"
+        self.menstrual_cycle_day = 0
+        self.hormone_levels = {}
+        self.sexual_health = "normal"
+        self.conditions = []
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class OphthalmologicSystem:
+    def __init__(self):
+        self.vision = "normal"
+        self.eye_trauma = False
+        self.infection = False
+        self.conditions = []
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class OtolaryngologicSystem:
+    def __init__(self):
+        self.hearing = "normal"
+        self.balance = "normal"
+        self.airway = "patent"
+        self.infection = False
+        self.conditions = []
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class PediatricSystem:
+    def __init__(self):
+        self.growth_percentile = 50.0
+        self.congenital_conditions = []
+        self.vaccination_status = "up_to_date"
+        self.conditions = []
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class GeriatricSystem:
+    def __init__(self):
+        self.frailty_index = 0.0
+        self.polypharmacy = False
+        self.cognitive_decline = False
+        self.conditions = []
+    def update_from_stress(self, stress_level: float):
+        pass
+
+class PsychiatricSystem:
+    def __init__(self):
+        self.mood = "normal"
+        self.cognition = "normal"
+        self.substance_use = False
+        self.conditions = []
+    def update_from_stress(self, stress_level: float):
+        pass 
