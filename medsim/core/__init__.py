@@ -1,0 +1,3 @@
+"""
+Core simulation engine components
+""" 
