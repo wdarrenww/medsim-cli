@@ -17,14 +17,16 @@ import json
 from pathlib import Path
 
 from ..core.simulation import MedicalSimulation, PatientState
+from ..core.patient import EnhancedPatientProfile, PatientProfileGenerator
 from ..core.session import SessionManager
-from ..core.physiology import PhysiologicalEngine
+from ..core.physiology import EnhancedPhysiologicalEngine
 from ..core.dialogue import AdvancedDialogueSystem
 from ..core.diagnostics import AdvancedDiagnosticSystem
 from ..core.treatments import AdvancedTreatmentSystem
 from ..scenarios.scenario_manager import ScenarioManager
 from ..assessment.performance import AssessmentSystem
 from ..api.core import MedicalSimulatorAPI
+from ..core.drug_db import drug_db
 
 console = Console()
 app = typer.Typer()
@@ -36,7 +38,7 @@ class SimulatorCLI:
     def __init__(self):
         self.simulation = MedicalSimulation()
         self.session_manager = SessionManager()
-        self.physiology = PhysiologicalEngine()
+        self.physiology = EnhancedPhysiologicalEngine()
         self.dialogue = AdvancedDialogueSystem()
         self.diagnostics = AdvancedDiagnosticSystem()
         self.treatments = AdvancedTreatmentSystem()
@@ -77,7 +79,7 @@ class SimulatorCLI:
             "dialogue", "examination", "diagnosis", "save", "load", 
             "status", "step", "pause", "reset", "assessment", "quit",
             "alerts", "interpret", "pending", "available", "api", "json",
-            "plugins"
+            "plugins", "monitor", "trends", "alerts_manage", "drugs_monitor"
         ]
         
         def completer(text, state):
@@ -156,6 +158,13 @@ class SimulatorCLI:
         console.print("  assessment - View performance assessment")
         console.print("  save       - Save current session")
         console.print("  load       - Load saved session")
+        
+        # monitoring and trending
+        console.print("\n[bold yellow]Monitoring & Trending:[/bold yellow]")
+        console.print("  monitor    - Show monitoring dashboard and alerts")
+        console.print("  trends     - Show trending data for parameters")
+        console.print("  alerts_manage - Manage clinical alerts")
+        console.print("  drugs_monitor - Show drug monitoring data")
         
         # plugin management
         console.print("\n[bold yellow]Plugin Management:[/bold yellow]")
@@ -1256,6 +1265,14 @@ class SimulatorCLI:
                     self.show_api_info()
                 elif command == "json":
                     self.toggle_json_output()
+                elif command == "monitor":
+                    self.monitor()
+                elif command == "trends":
+                    self.trends()
+                elif command == "alerts_manage":
+                    self.alerts_manage()
+                elif command == "drugs_monitor":
+                    self.drugs_monitor()
                 elif command == "quit":
                     self._save_command_history()
                     console.print("Goodbye!")
@@ -1689,6 +1706,673 @@ class SimulatorCLI:
                 cost = f"${study.cost:.0f}" if study.cost else "N/A"
                 time = f"{study.turnaround_time} min" if study.turnaround_time else "N/A"
                 console.print(f"  • {study.name} ({cost}, {time})")
+
+    @app.command()
+    def patient_enhanced(self):
+        """view enhanced patient information including personality and social determinants"""
+        if not self.simulation or not self.simulation.patient_state:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        
+        patient = self.simulation.get_patient()
+        if not hasattr(patient, 'personality'):
+            console.print("❌ Enhanced patient system not available.", style="red")
+            return
+        
+        # create rich table for enhanced patient info
+        table = Table(title=f"Enhanced Patient Profile - {patient.name}")
+        table.add_column("Category", style="cyan")
+        table.add_column("Details", style="white")
+        
+        # basic demographics
+        table.add_row("Demographics", f"Age: {patient.age}, Gender: {patient.gender}, Race/Ethnicity: {patient.race_ethnicity}")
+        
+        # physical characteristics
+        table.add_row("Physical", f"Height: {patient.height}cm, Weight: {patient.weight}kg, BMI: {patient.bmi:.1f}")
+        
+        # personality
+        personality = patient.personality
+        table.add_row("Personality", f"Type: {personality.personality_type.value}, Communication: {personality.communication_style}")
+        table.add_row("Health Literacy", f"Level: {personality.health_literacy}, Trust: {personality.trust_in_healthcare}")
+        
+        # social history
+        social = patient.social_history
+        table.add_row("Social History", f"Occupation: {social.occupation}, Education: {social.education_level}")
+        table.add_row("Insurance", f"Status: {social.insurance_status}, Language: {social.primary_language}")
+        
+        # social determinants
+        if social.social_determinants:
+            determinants = ", ".join([d.value for d in social.social_determinants])
+            table.add_row("Social Determinants", determinants)
+        
+        # lifestyle factors
+        lifestyle = patient.lifestyle_factors
+        table.add_row("Lifestyle", f"Smoking: {lifestyle.smoking_status}, Alcohol: {lifestyle.alcohol_use}")
+        table.add_row("Exercise", f"Frequency: {lifestyle.exercise_frequency}, Diet: {lifestyle.diet_quality}")
+        
+        # emotional state
+        table.add_row("Emotional State", f"Current: {patient.emotional_state.value}, Pain: {patient.pain_level}/10")
+        table.add_row("Anxiety", f"Level: {patient.anxiety_level}/10, Cognitive: {patient.cognitive_status}")
+        
+        # family history
+        if patient.family_history.conditions:
+            conditions = ", ".join(patient.family_history.conditions)
+            table.add_row("Family History", conditions)
+        
+        # risk factors
+        risk_factors = patient.get_risk_factors()
+        if risk_factors:
+            table.add_row("Risk Factors", ", ".join(risk_factors))
+        
+        console.print(table)
+
+    @app.command()
+    def physiology(self):
+        """view detailed physiological system status, including all organ systems"""
+        if not self.simulation or not self.simulation.patient_state:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        
+        if not hasattr(self.simulation, 'physiological_engine'):
+            console.print("❌ Enhanced physiological system not available.", style="red")
+            return
+        
+        engine = self.simulation.physiological_engine
+        system_status = engine.get_system_status()
+        
+        # create rich table
+        table = Table(title="Physiological System Status (All Systems)")
+        table.add_column("System", style="cyan")
+        table.add_column("Status/Key Parameters", style="white")
+        
+        for system_name, status in system_status.items():
+            # summarize key parameters for each system
+            if isinstance(status, dict):
+                summary = ", ".join(f"{k}: {v}" for k, v in list(status.items())[:3])
+            else:
+                summary = str(status)
+            table.add_row(system_name.title(), summary)
+        
+        console.print(table)
+
+    @app.command()
+    def system_detail(self, system: str):
+        """view detailed parameters for a specific organ system"""
+        if not self.simulation or not self.simulation.patient_state:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        if not hasattr(self.simulation, 'physiological_engine'):
+            console.print("❌ Enhanced physiological system not available.", style="red")
+            return
+        engine = self.simulation.physiological_engine
+        system_status = engine.get_system_status()
+        system = system.lower()
+        if system not in system_status:
+            console.print(f"❌ System '{system}' not found.", style="red")
+            return
+        status = system_status[system]
+        table = Table(title=f"{system.title()} System Details")
+        table.add_column("Parameter", style="cyan")
+        table.add_column("Value", style="white")
+        if isinstance(status, dict):
+            for k, v in status.items():
+                table.add_row(k, str(v))
+        else:
+            table.add_row("Status", str(status))
+        console.print(table)
+
+    @app.command()
+    def labs(self):
+        """view current laboratory values"""
+        if not self.simulation or not self.simulation.patient_state:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        
+        if not hasattr(self.simulation, 'physiological_engine'):
+            console.print("❌ Enhanced physiological system not available.", style="red")
+            return
+        
+        engine = self.simulation.physiological_engine
+        lab_values = engine.get_lab_values()
+        abnormal_values = engine.get_abnormal_values()
+        
+        # create rich table
+        table = Table(title="Laboratory Values")
+        table.add_column("Test", style="cyan")
+        table.add_column("Value", style="white")
+        table.add_column("Status", style="green")
+        table.add_column("Normal Range", style="dim")
+        
+        for test, value in lab_values.items():
+            # find if this test is abnormal
+            abnormal = next((ab for ab in abnormal_values if ab["test"] == test), None)
+            
+            if abnormal:
+                status = f"[red]{abnormal['status']}[/red]"
+                normal_range = abnormal["normal_range"]
+            else:
+                status = "[green]normal[/green]"
+                normal_range = "N/A"
+            
+            table.add_row(
+                test.upper(),
+                f"{value:.1f}" if isinstance(value, float) else str(value),
+                status,
+                normal_range
+            )
+        
+        console.print(table)
+        
+        if abnormal_values:
+            console.print(f"\n⚠️  {len(abnormal_values)} abnormal values detected", style="yellow")
+
+    @app.command()
+    def diseases(self):
+        """view current diseases and their effects"""
+        if not self.simulation or not self.simulation.patient_state:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        
+        if not hasattr(self.simulation, 'physiological_engine'):
+            console.print("❌ Enhanced physiological system not available.", style="red")
+            return
+        
+        engine = self.simulation.physiological_engine
+        
+        if not engine.diseases:
+            console.print("✅ No active diseases", style="green")
+            return
+        
+        # create rich table
+        table = Table(title="Active Diseases")
+        table.add_column("Disease", style="cyan")
+        table.add_column("Severity", style="white")
+        table.add_column("Onset Time", style="green")
+        
+        for disease in engine.diseases:
+            severity = disease["severity"]
+            if severity > 0.8:
+                severity_style = "red"
+            elif severity > 0.5:
+                severity_style = "yellow"
+            else:
+                severity_style = "green"
+            
+            table.add_row(
+                disease["name"],
+                f"[{severity_style}]{severity:.2f}[/{severity_style}]",
+                f"Step {disease['onset_time']}"
+            )
+        
+        console.print(table)
+
+    @app.command()
+    def add_disease(self):
+        """add a disease to the patient"""
+        if not self.simulation or not self.simulation.patient_state:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        
+        if not hasattr(self.simulation, 'physiological_engine'):
+            console.print("❌ Enhanced physiological system not available.", style="red")
+            return
+        
+        engine = self.simulation.physiological_engine
+        
+        # available diseases
+        available_diseases = [
+            "Hypertension", "Diabetes", "Heart Failure", "Pneumonia", "Sepsis",
+            "Kidney Disease", "Liver Disease", "Anemia", "Thyroid Disease"
+        ]
+        
+        console.print("Available diseases:")
+        for i, disease in enumerate(available_diseases, 1):
+            console.print(f"{i}. {disease}")
+        
+        try:
+            choice = int(input("\nSelect disease (1-9): ")) - 1
+            if 0 <= choice < len(available_diseases):
+                disease_name = available_diseases[choice]
+                severity = float(input("Enter severity (0.1-1.0): "))
+                severity = max(0.1, min(1.0, severity))
+                
+                engine.add_disease(disease_name, severity)
+                console.print(f"✅ Added {disease_name} with severity {severity:.2f}", style="green")
+            else:
+                console.print("❌ Invalid choice", style="red")
+        except (ValueError, IndexError):
+            console.print("❌ Invalid input", style="red")
+
+    @app.command()
+    def remove_disease(self):
+        """remove a disease from the patient"""
+        if not self.simulation or not self.simulation.patient_state:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        
+        if not hasattr(self.simulation, 'physiological_engine'):
+            console.print("❌ Enhanced physiological system not available.", style="red")
+            return
+        
+        engine = self.simulation.physiological_engine
+        
+        if not engine.diseases:
+            console.print("✅ No active diseases to remove", style="green")
+            return
+        
+        console.print("Active diseases:")
+        for i, disease in enumerate(engine.diseases, 1):
+            console.print(f"{i}. {disease['name']} (severity: {disease['severity']:.2f})")
+        
+        try:
+            choice = int(input("\nSelect disease to remove (1-{}): ".format(len(engine.diseases)))) - 1
+            if 0 <= choice < len(engine.diseases):
+                disease_name = engine.diseases[choice]["name"]
+                engine.remove_disease(disease_name)
+                console.print(f"✅ Removed {disease_name}", style="green")
+            else:
+                console.print("❌ Invalid choice", style="red")
+        except (ValueError, IndexError):
+            console.print("❌ Invalid input", style="red")
+
+    @app.command()
+    def drugs(self):
+        """list all available drugs"""
+        table = Table(title="Available Drugs")
+        table.add_column("Name", style="cyan")
+        table.add_column("Class", style="white")
+        table.add_column("Route", style="white")
+        table.add_column("Dose", style="green")
+        table.add_column("Units", style="green")
+        for drug in drug_db.values():
+            table.add_row(drug.name, drug.class_, drug.route, str(drug.dose), drug.units)
+        console.print(table)
+
+    @app.command()
+    def give_drug(self, name: str, dose: float, route: str = "IV"):
+        """administer a drug to the patient"""
+        if not self.is_running:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        try:
+            admin = self.simulation.administer_drug(name, dose, route)
+            console.print(f"✅ Administered {name} {dose}{admin.drug.units} via {route}", style="green")
+        except Exception as e:
+            console.print(f"❌ {e}", style="red")
+
+    @app.command()
+    def monitor_drugs(self):
+        """monitor active drugs and concentrations"""
+        if not self.is_running:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        active = self.simulation.get_active_drugs()
+        if not active:
+            console.print("No active drugs.", style="yellow")
+            return
+        table = Table(title="Active Drugs")
+        table.add_column("Drug", style="cyan")
+        table.add_column("Dose", style="white")
+        table.add_column("Route", style="white")
+        table.add_column("Concentration", style="green")
+        table.add_column("Time Since Admin (min)", style="dim")
+        for admin in active:
+            table.add_row(
+                admin.drug.name,
+                str(admin.dose),
+                admin.route,
+                f"{admin.concentration:.2f}",
+                f"{self.simulation.current_time - admin.start_time:.1f}"
+            )
+        console.print(table)
+
+    @app.command()
+    def adverse_events(self):
+        """view adverse drug events"""
+        if not self.is_running:
+            console.print("❌ No active simulation. Start a simulation first.", style="red")
+            return
+        events = self.simulation.get_adverse_events()
+        if not events:
+            console.print("No adverse events detected.", style="green")
+            return
+        table = Table(title="Adverse Drug Events")
+        table.add_column("Event", style="red")
+        for event in events:
+            table.add_row(event)
+        console.print(table)
+    
+    @app.command()
+    def monitor(self, live: bool = False):
+        """show monitoring dashboard and alerts"""
+        if not self.is_running:
+            console.print("[red]No simulation running. Start a simulation first.[/red]")
+            return
+        
+        if live:
+            # live monitoring dashboard
+            from rich.live import Live
+            from rich.layout import Layout
+            from rich.align import Align
+            
+            def create_dashboard():
+                layout = Layout()
+                layout.split_column(
+                    Layout(name="header", size=3),
+                    Layout(name="main"),
+                    Layout(name="footer", size=3)
+                )
+                
+                layout["main"].split_row(
+                    Layout(name="vitals", ratio=1),
+                    Layout(name="alerts", ratio=1),
+                    Layout(name="drugs", ratio=1)
+                )
+                
+                # header
+                header_text = Text("MEDICAL SIMULATION MONITORING DASHBOARD", style="bold blue")
+                layout["header"].update(Panel(Align.center(header_text)))
+                
+                # vitals section
+                vitals = self.simulation.physiological_engine.get_vital_signs()
+                vitals_table = Table(title="Vital Signs", show_header=True, header_style="bold magenta")
+                vitals_table.add_column("Parameter", style="cyan")
+                vitals_table.add_column("Value", style="green")
+                vitals_table.add_column("Unit", style="yellow")
+                
+                for param, value in vitals.items():
+                    vitals_table.add_row(param, f"{value:.1f}", self._get_unit(param))
+                
+                layout["vitals"].update(Panel(vitals_table))
+                
+                # alerts section
+                active_alerts = self.simulation.get_active_alerts()
+                alerts_table = Table(title="Active Alerts", show_header=True, header_style="bold red")
+                alerts_table.add_column("Level", style="red")
+                alerts_table.add_column("Message", style="white")
+                alerts_table.add_column("Time", style="dim")
+                
+                for alert in active_alerts[:5]:  # show top 5
+                    alerts_table.add_row(
+                        alert.level.value.upper(),
+                        alert.message,
+                        alert.timestamp.strftime("%H:%M:%S")
+                    )
+                
+                if not active_alerts:
+                    alerts_table.add_row("", "No active alerts", "")
+                
+                layout["alerts"].update(Panel(alerts_table))
+                
+                # drugs section
+                drug_summaries = self.simulation.get_drug_monitoring_summary()
+                drugs_table = Table(title="Drug Levels", show_header=True, header_style="bold green")
+                drugs_table.add_column("Drug", style="cyan")
+                drugs_table.add_column("Level", style="green")
+                drugs_table.add_column("Status", style="yellow")
+                
+                for drug_name, summary in drug_summaries.items():
+                    if summary:
+                        drugs_table.add_row(
+                            drug_name,
+                            f"{summary['current_level']:.2f}",
+                            summary['status']
+                        )
+                
+                if not drug_summaries:
+                    drugs_table.add_row("", "", "")
+                
+                layout["drugs"].update(Panel(drugs_table))
+                
+                # footer
+                footer_text = Text(f"Last updated: {datetime.now().strftime('%H:%M:%S')}", style="dim")
+                layout["footer"].update(Panel(Align.center(footer_text)))
+                
+                return layout
+            
+            with Live(create_dashboard(), refresh_per_second=1) as live_dashboard:
+                try:
+                    while True:
+                        live_dashboard.update(create_dashboard())
+                except KeyboardInterrupt:
+                    console.print("\n[yellow]Monitoring stopped[/yellow]")
+        else:
+            # static monitoring summary
+            summary = self.simulation.get_monitoring_summary()
+            
+            table = Table(title="Monitoring Summary")
+            table.add_column("Metric", style="cyan")
+            table.add_column("Value", style="green")
+            
+            table.add_row("Monitoring Active", str(summary["monitoring_active"]))
+            table.add_row("Active Alerts", str(summary["active_alerts"]))
+            table.add_row("Total Trends", str(summary["total_trends"]))
+            table.add_row("Total Alerts", str(summary["total_alerts"]))
+            
+            console.print(table)
+            
+            # show active alerts
+            active_alerts = self.simulation.get_active_alerts()
+            if active_alerts:
+                alerts_table = Table(title="Active Alerts")
+                alerts_table.add_column("Level", style="red")
+                alerts_table.add_column("Message", style="white")
+                alerts_table.add_column("Parameter", style="cyan")
+                alerts_table.add_column("Value", style="green")
+                alerts_table.add_column("Time", style="dim")
+                
+                for alert in active_alerts:
+                    alerts_table.add_row(
+                        alert.level.value.upper(),
+                        alert.message,
+                        alert.parameter,
+                        f"{alert.value:.1f}",
+                        alert.timestamp.strftime("%H:%M:%S")
+                    )
+                
+                console.print(alerts_table)
+    
+    @app.command()
+    def trends(self, parameter: Optional[str] = None, minutes: int = 60):
+        """show trending data for parameters"""
+        if not self.is_running:
+            console.print("[red]No simulation running. Start a simulation first.[/red]")
+            return
+        
+        if parameter:
+            # show trend for specific parameter
+            trend_data = self.simulation.get_trend_data(parameter)
+            if not trend_data:
+                console.print(f"[red]No trend data for {parameter}[/red]")
+                return
+            
+            stats = trend_data.get_statistics()
+            recent_data = trend_data.get_recent_data(minutes)
+            
+            # trend statistics table
+            table = Table(title=f"Trend Data: {parameter}")
+            table.add_column("Metric", style="cyan")
+            table.add_column("Value", style="green")
+            
+            table.add_row("Current", f"{stats['current']:.2f}")
+            table.add_row("Min", f"{stats['min']:.2f}")
+            table.add_row("Max", f"{stats['max']:.2f}")
+            table.add_row("Mean", f"{stats['mean']:.2f}")
+            table.add_row("Trend", stats['trend'])
+            table.add_row("Trend Strength", f"{stats['trend_strength']:.2f}")
+            table.add_row("Data Points", str(stats['data_points']))
+            
+            console.print(table)
+            
+            # recent data points
+            if recent_data:
+                data_table = Table(title=f"Recent Data ({minutes} minutes)")
+                data_table.add_column("Time", style="dim")
+                data_table.add_column("Value", style="green")
+                data_table.add_column("Unit", style="yellow")
+                
+                for point in recent_data[-10:]:  # last 10 points
+                    data_table.add_row(
+                        point.timestamp.strftime("%H:%M:%S"),
+                        f"{point.value:.2f}",
+                        point.unit
+                    )
+                
+                console.print(data_table)
+        else:
+            # show all trends
+            all_trends = self.simulation.get_all_trends()
+            
+            # all trends summary table
+            table = Table(title="All Trends")
+            table.add_column("Parameter", style="cyan")
+            table.add_column("Current", style="green")
+            table.add_column("Trend", style="blue")
+            table.add_column("Strength", style="yellow")
+            table.add_column("Data Points", style="dim")
+            
+            for param, trend in all_trends.items():
+                stats = trend.get_statistics()
+                if stats:
+                    table.add_row(
+                        param,
+                        f"{stats['current']:.2f}",
+                        stats['trend'],
+                        f"{stats['trend_strength']:.2f}",
+                        str(stats['data_points'])
+                    )
+            
+            console.print(table)
+    
+    @app.command()
+    def alerts_manage(self, acknowledge: Optional[str] = None):
+        """manage alerts"""
+        if not self.is_running:
+            console.print("[red]No simulation running. Start a simulation first.[/red]")
+            return
+        
+        if acknowledge:
+            # acknowledge specific alert
+            self.simulation.acknowledge_alert(acknowledge, "cli_user")
+            console.print(f"[green]Alert {acknowledge} acknowledged[/green]")
+            return
+        
+        # show all alerts
+        active_alerts = self.simulation.get_active_alerts()
+        
+        # alerts table
+        table = Table(title="Active Alerts")
+        table.add_column("ID", style="cyan")
+        table.add_column("Level", style="red")
+        table.add_column("Message", style="white")
+        table.add_column("Parameter", style="cyan")
+        table.add_column("Value", style="green")
+        table.add_column("Time", style="dim")
+        
+        for alert in active_alerts:
+            level_color = {
+                "info": "blue",
+                "warning": "yellow",
+                "critical": "red",
+                "emergency": "bold red"
+            }.get(alert.level.value, "white")
+            
+            table.add_row(
+                alert.id,
+                f"[{level_color}]{alert.level.value.upper()}[/{level_color}]",
+                alert.message,
+                alert.parameter,
+                f"{alert.value:.2f}",
+                alert.timestamp.strftime("%H:%M:%S")
+            )
+        
+        if not active_alerts:
+            table.add_row("", "", "No active alerts", "", "", "")
+        
+        console.print(table)
+    
+    @app.command()
+    def drugs_monitor(self, drug_name: Optional[str] = None):
+        """show drug monitoring data"""
+        if not self.is_running:
+            console.print("[red]No simulation running. Start a simulation first.[/red]")
+            return
+        
+        if drug_name:
+            # show specific drug
+            drug_summaries = self.simulation.get_drug_monitoring_summary()
+            drug_summary = drug_summaries.get(drug_name)
+            
+            if not drug_summary:
+                console.print(f"[red]No monitoring data for {drug_name}[/red]")
+                return
+            
+            # drug summary table
+            table = Table(title=f"Drug Monitoring: {drug_name}")
+            table.add_column("Metric", style="cyan")
+            table.add_column("Value", style="green")
+            
+            table.add_row("Current Level", f"{drug_summary['current_level']:.2f} mg/L")
+            table.add_row("Therapeutic Range", drug_summary['therapeutic_range'])
+            table.add_row("Toxic Threshold", f"{drug_summary['toxic_threshold']:.2f} mg/L")
+            table.add_row("Status", drug_summary['status'])
+            
+            # effects
+            if drug_summary['effects']:
+                effects_table = Table(title="Drug Effects")
+                effects_table.add_column("Effect", style="cyan")
+                effects_table.add_column("Magnitude", style="green")
+                
+                for effect, magnitude in drug_summary['effects'].items():
+                    effects_table.add_row(effect, f"{magnitude:.2f}")
+                
+                console.print(table)
+                console.print(effects_table)
+            else:
+                console.print(table)
+        else:
+            # show all drugs
+            drug_summaries = self.simulation.get_drug_monitoring_summary()
+            
+            # all drugs table
+            table = Table(title="Drug Monitoring Summary")
+            table.add_column("Drug", style="cyan")
+            table.add_column("Level", style="green")
+            table.add_column("Status", style="yellow")
+            table.add_column("Range", style="dim")
+            table.add_column("Effects", style="blue")
+            
+            for drug_name, summary in drug_summaries.items():
+                if summary:
+                    effects_count = len(summary.get('effects', {}))
+                    table.add_row(
+                        drug_name,
+                        f"{summary['current_level']:.2f}",
+                        summary['status'],
+                        summary['therapeutic_range'],
+                        str(effects_count)
+                    )
+            
+            if not drug_summaries:
+                table.add_row("", "", "", "", "")
+            
+            console.print(table)
+    
+    def _get_unit(self, parameter: str) -> str:
+        """get unit for parameter"""
+        units = {
+            "heart_rate": "bpm",
+            "blood_pressure_systolic": "mmHg",
+            "blood_pressure_diastolic": "mmHg",
+            "temperature": "°C",
+            "oxygen_saturation": "%",
+            "respiratory_rate": "breaths/min",
+            "glucose": "mg/dL",
+            "potassium": "mEq/L",
+            "sodium": "mEq/L",
+            "creatinine": "mg/dL",
+        }
+        return units.get(parameter, "units")
 
 
 @app.command()

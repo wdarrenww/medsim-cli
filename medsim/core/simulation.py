@@ -7,6 +7,12 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import logging
+import json
+from .patient import EnhancedPatientProfile, PatientProfileGenerator, EmotionalState
+from .physiology import EnhancedPhysiologicalEngine
+from .pharmacology import PKPDEngine
+from .drug_db import drug_db
+from .monitoring import MonitoringSystem, DrugLevelMonitor, DrugLevel
 
 logger = logging.getLogger(__name__)
 
@@ -50,31 +56,239 @@ class PatientState:
             self.procedures.append(procedure)
 
 
+@dataclass
+class SimulationState:
+    """current state of the simulation"""
+    patient_id: str
+    current_time: datetime
+    vital_signs: Dict[str, float] = field(default_factory=dict)
+    lab_values: Dict[str, float] = field(default_factory=dict)
+    active_drugs: Dict[str, DrugLevel] = field(default_factory=dict)
+    symptoms: List[str] = field(default_factory=list)
+    procedures_performed: List[str] = field(default_factory=list)
+    monitoring_active: bool = False
+
+
 class MedicalSimulation:
-    """main simulation engine for medical scenarios"""
+    """main medical simulation engine"""
     
     def __init__(self):
         self.env = simpy.Environment()
-        self.patients: Dict[str, PatientState] = {}
-        self.current_time = 0
-        self.events: List[Dict[str, Any]] = []
+        self.patient_state = None
+        self.physiological_engine = EnhancedPhysiologicalEngine()
+        self.patient_generator = PatientProfileGenerator()
         self.is_running = False
+        self.current_time = 0
+        self.events = []
         
-    def add_patient(self, patient_id: str, name: str, age: int, gender: str) -> PatientState:
-        """add a new patient to the simulation"""
-        patient = PatientState(
-            patient_id=patient_id,
-            name=name,
-            age=age,
-            gender=gender
+        # enhanced systems
+        self.enhanced_patient = None
+        self.stress_level = 0.0
+        
+        # pk/pd engine
+        self.pkpd_engine = PKPDEngine(drug_db)
+        self.patient_weight = 70.0  # default, can be set from patient profile
+        
+        self.monitoring = MonitoringSystem()
+        self.drug_monitor = DrugLevelMonitor(self.monitoring)
+        
+        self.current_state = SimulationState(
+            patient_id="default",
+            current_time=datetime.now()
         )
-        self.patients[patient_id] = patient
-        logger.info(f"added patient: {name} (id: {patient_id})")
-        return patient
+        
+        # initialize monitoring callbacks
+        self.monitoring.add_alert_callback(self._on_alert)
+        
+    def start_simulation(self, patient_profile: Optional[Dict[str, Any]] = None):
+        """start a new simulation session"""
+        if patient_profile is None:
+            # generate a new patient
+            self.enhanced_patient = self.patient_generator.generate_patient()
+        else:
+            # use provided patient profile
+            self.enhanced_patient = EnhancedPatientProfile.from_dict(patient_profile)
+        
+        # initialize patient state with enhanced data
+        self.patient_state = PatientState(
+            name=self.enhanced_patient.name,
+            age=self.enhanced_patient.age,
+            gender=self.enhanced_patient.gender,
+            vital_signs={
+                "blood_pressure_systolic": self.enhanced_patient.vitals.get("blood_pressure_systolic", 120),
+                "blood_pressure_diastolic": self.enhanced_patient.vitals.get("blood_pressure_diastolic", 80),
+                "heart_rate": self.enhanced_patient.vitals.get("heart_rate", 80),
+                "respiratory_rate": self.enhanced_patient.vitals.get("respiratory_rate", 16),
+                "temperature": self.enhanced_patient.vitals.get("temperature", 98.6),
+                "oxygen_saturation": self.enhanced_patient.vitals.get("oxygen_saturation", 98)
+            },
+            symptoms=self.enhanced_patient.symptoms.copy(),
+            medications=self.enhanced_patient.medications.copy(),
+            lab_results=self.enhanced_patient.lab_results.copy(),
+            imaging_results=self.enhanced_patient.imaging_results.copy()
+        )
+        
+        # initialize physiological engine
+        self.physiological_engine = EnhancedPhysiologicalEngine()
+        
+        # add any existing conditions to physiological engine
+        for condition in self.enhanced_patient.conditions:
+            self.physiological_engine.add_disease(condition, severity=0.5)
+        
+        self.is_running = True
+        self.current_time = 0
+        self.events = []
+        
+        # schedule initial events
+        self._schedule_physiological_updates()
+        
+        self.current_state.monitoring_active = True
+        self.monitoring.start_monitoring()
+        
+        return self.enhanced_patient
     
-    def get_patient(self, patient_id: str) -> Optional[PatientState]:
-        """get a patient by id"""
-        return self.patients.get(patient_id)
+    def _schedule_physiological_updates(self):
+        """schedule regular physiological updates"""
+        def update_physiology():
+            while self.is_running:
+                # update physiological systems
+                self.physiological_engine.update_systems(
+                    stress_level=self.stress_level,
+                    medications=self.patient_state.medications
+                )
+                
+                # update patient state with new vital signs
+                new_vitals = self.physiological_engine.get_vital_signs()
+                self.patient_state.vital_signs.update(new_vitals)
+                
+                # update enhanced patient emotional state based on stress
+                if self.stress_level > 0.7:
+                    self.enhanced_patient.update_emotional_state(EmotionalState.ANXIOUS)
+                elif self.stress_level > 0.3:
+                    self.enhanced_patient.update_emotional_state(EmotionalState.CALM)
+                
+                yield self.env.timeout(1)  # update every time step
+        
+        self.env.process(update_physiology())
+    
+    def get_patient(self) -> EnhancedPatientProfile:
+        """get the enhanced patient profile"""
+        return self.enhanced_patient
+    
+    def update_stress_level(self, new_stress: float):
+        """update patient stress level (0.0-1.0)"""
+        self.stress_level = max(0.0, min(1.0, new_stress))
+        
+        # update patient anxiety level
+        anxiety_level = int(self.stress_level * 10)
+        self.enhanced_patient.update_anxiety_level(anxiety_level)
+    
+    def add_disease(self, disease_name: str, severity: float = 1.0):
+        """add a disease to the patient"""
+        self.physiological_engine.add_disease(disease_name, severity)
+    
+    def remove_disease(self, disease_name: str):
+        """remove a disease from the patient"""
+        self.physiological_engine.remove_disease(disease_name)
+    
+    def get_physiological_status(self) -> Dict[str, Any]:
+        """get detailed physiological status"""
+        return {
+            "system_status": self.physiological_engine.get_system_status(),
+            "lab_values": self.physiological_engine.get_lab_values(),
+            "abnormal_values": self.physiological_engine.get_abnormal_values(),
+            "diseases": self.physiological_engine.diseases
+        }
+    
+    def step_simulation(self):
+        """advance simulation by one time step"""
+        if not self.is_running:
+            return False
+        
+        self.env.step()
+        self.current_time += 1
+        
+        # update pk/pd engine and physiological engine
+        self.update_pkpd(dt=1.0)
+        
+        # update patient state with latest physiological data
+        if self.physiological_engine:
+            new_vitals = self.physiological_engine.get_vital_signs()
+            self.patient_state.vital_signs.update(new_vitals)
+        
+        return True
+    
+    def pause_simulation(self):
+        """pause the simulation"""
+        self.is_running = False
+    
+    def resume_simulation(self):
+        """resume the simulation"""
+        self.is_running = True
+    
+    def reset_simulation(self):
+        """reset the simulation to initial state"""
+        self.is_running = False
+        self.current_time = 0
+        self.events = []
+        self.stress_level = 0.0
+        
+        # reset physiological engine
+        self.physiological_engine = EnhancedPhysiologicalEngine()
+        
+        # reset enhanced patient
+        if self.enhanced_patient:
+            self.enhanced_patient.update_emotional_state(EmotionalState.CALM)
+            self.enhanced_patient.update_pain_level(0)
+            self.enhanced_patient.update_anxiety_level(0)
+        
+        self.current_state.monitoring_active = False
+        self.monitoring.stop_monitoring()
+    
+    def save_session(self, filename: str):
+        """save current simulation session"""
+        session_data = {
+            "patient": self.enhanced_patient.to_dict() if self.enhanced_patient else None,
+            "patient_state": self.patient_state.to_dict() if self.patient_state else None,
+            "physiological_status": self.get_physiological_status(),
+            "current_time": self.current_time,
+            "stress_level": self.stress_level,
+            "is_running": self.is_running,
+            "monitoring_active": self.current_state.monitoring_active
+        }
+        
+        with open(filename, 'w') as f:
+            json.dump(session_data, f, indent=2)
+    
+    def load_session(self, filename: str):
+        """load a saved simulation session"""
+        with open(filename, 'r') as f:
+            session_data = json.load(f)
+        
+        # restore enhanced patient
+        if session_data.get("patient"):
+            self.enhanced_patient = EnhancedPatientProfile.from_dict(session_data["patient"])
+        
+        # restore patient state
+        if session_data.get("patient_state"):
+            self.patient_state = PatientState.from_dict(session_data["patient_state"])
+        
+        # restore physiological status
+        if session_data.get("physiological_status"):
+            # recreate physiological engine with saved data
+            self.physiological_engine = EnhancedPhysiologicalEngine()
+            
+            # restore diseases
+            for disease in session_data["physiological_status"].get("diseases", []):
+                self.physiological_engine.add_disease(disease["name"], disease["severity"])
+        
+        self.current_time = session_data.get("current_time", 0)
+        self.stress_level = session_data.get("stress_level", 0.0)
+        self.is_running = session_data.get("is_running", False)
+        
+        self.current_state.monitoring_active = session_data.get("monitoring_active", False)
+        if self.current_state.monitoring_active:
+            self.monitoring.start_monitoring()
     
     def schedule_event(self, delay: float, event_type: str, data: Dict[str, Any]) -> None:
         """schedule an event to occur after a delay"""
@@ -118,38 +332,14 @@ class MedicalSimulation:
                 # apply medication effect to patient state
                 logger.info(f"medication {medication} effect on patient {patient_id}: {effect}")
     
-    def start_simulation(self) -> None:
-        """start the simulation"""
-        self.is_running = True
-        logger.info("simulation started")
-    
-    def pause_simulation(self) -> None:
-        """pause the simulation"""
-        self.is_running = False
-        logger.info("simulation paused")
-    
-    def step_simulation(self, time_step: float = 1.0) -> None:
-        """advance simulation by one time step"""
-        if not self.is_running:
-            return
-        
-        # advance simpy environment
-        self.env.run(until=self.env.now + time_step)
-        self.current_time = self.env.now
-        
-        # process any events that should occur at this time
-        current_events = [e for e in self.events if e['scheduled_time'] <= self.current_time]
-        for event in current_events:
-            self._process_event(event)
-            self.events.remove(event)
-    
     def get_simulation_state(self) -> Dict[str, Any]:
         """get current simulation state"""
         return {
             'current_time': self.current_time,
             'is_running': self.is_running,
             'patient_count': len(self.patients),
-            'pending_events': len(self.events)
+            'pending_events': len(self.events),
+            'monitoring_active': self.current_state.monitoring_active
         }
     
     def reset_simulation(self) -> None:
@@ -158,4 +348,149 @@ class MedicalSimulation:
         self.current_time = 0
         self.events.clear()
         self.is_running = False
-        logger.info("simulation reset") 
+        logger.info("simulation reset")
+
+    def administer_drug(self, name: str, dose: float, route: str):
+        """administer a drug to the patient"""
+        return self.pkpd_engine.administer_drug(name, dose, route, self.patient_weight)
+
+    def get_active_drugs(self):
+        return self.pkpd_engine.get_active_drugs()
+
+    def get_adverse_events(self):
+        return self.pkpd_engine.get_adverse_events()
+
+    def update_pkpd(self, dt: float = 1.0):
+        self.pkpd_engine.update(dt, self.physiological_engine)
+
+    def _on_alert(self, alert):
+        """handle new alerts"""
+        print(f"🚨 ALERT: {alert.level.value.upper()} - {alert.message}")
+    
+    def _update_vital_signs(self):
+        """update vital signs from physiological engine"""
+        vitals = self.physiological_engine.get_vital_signs()
+        self.current_state.vital_signs = vitals
+        
+        # add to monitoring
+        for param, value in vitals.items():
+            self.monitoring.add_trend_data(param, value, self._get_unit(param))
+    
+    def _get_unit(self, parameter: str) -> str:
+        """get unit for parameter"""
+        units = {
+            "heart_rate": "bpm",
+            "blood_pressure_systolic": "mmHg",
+            "blood_pressure_diastolic": "mmHg",
+            "temperature": "°C",
+            "oxygen_saturation": "%",
+            "respiratory_rate": "breaths/min",
+            "glucose": "mg/dL",
+            "potassium": "mEq/L",
+            "sodium": "mEq/L",
+            "creatinine": "mg/dL",
+        }
+        return units.get(parameter, "units")
+    
+    def get_monitoring_summary(self) -> Dict[str, Any]:
+        """get monitoring system summary"""
+        return self.monitoring.get_monitoring_summary()
+    
+    def get_drug_monitoring_summary(self) -> Dict[str, Dict[str, Any]]:
+        """get drug monitoring summaries"""
+        return self.drug_monitor.get_all_drug_summaries()
+    
+    def get_active_alerts(self):
+        """get active alerts"""
+        return self.monitoring.get_active_alerts()
+    
+    def acknowledge_alert(self, alert_id: str, acknowledged_by: str):
+        """acknowledge an alert"""
+        self.monitoring.acknowledge_alert(alert_id, acknowledged_by)
+    
+    def get_trend_data(self, parameter: str):
+        """get trend data for parameter"""
+        return self.monitoring.get_trend_data(parameter)
+    
+    def get_all_trends(self):
+        """get all trend data"""
+        return self.monitoring.get_all_trends()
+    
+    def update_simulation(self):
+        """update simulation state"""
+        if not self.is_running:
+            return
+        
+        # update physiological systems
+        self.physiological_engine.update_systems(
+            stress_level=self.stress_level,
+            medications=self.patient_state.medications
+        )
+        
+        # update vital signs
+        self._update_vital_signs()
+        
+        # update drug levels (simplified - in real system would use PK/PD)
+        self._update_drug_levels()
+    
+    def _update_drug_levels(self):
+        """update drug levels over time"""
+        current_time = datetime.now()
+        
+        for drug_name, level in self.current_state.active_drugs.items():
+            # simple decay model
+            time_diff = (current_time - level.timestamp).total_seconds() / 3600  # hours
+            
+            # exponential decay
+            half_life = 2.0  # hours
+            decay_factor = 2 ** (-time_diff / half_life)
+            
+            new_concentration = level.concentration * decay_factor
+            
+            # update level
+            level.concentration = new_concentration
+            level.timestamp = current_time
+            
+            # update status
+            if new_concentration < level.therapeutic_min * 0.5:
+                level.status = "subtherapeutic"
+            elif new_concentration > level.toxic_threshold:
+                level.status = "toxic"
+            else:
+                level.status = "therapeutic"
+            
+            # add to monitoring
+            self.drug_monitor.add_drug_level(drug_name, level)
+    
+    def set_patient_profile(self, profile: Dict[str, Any]):
+        """set patient profile for simulation"""
+        # update physiological engine with patient characteristics
+        if "age" in profile:
+            self.physiological_engine.set_age(profile["age"])
+        if "weight" in profile:
+            self.physiological_engine.set_weight(profile["weight"])
+        if "height" in profile:
+            self.physiological_engine.set_height(profile["height"])
+        if "gender" in profile:
+            self.physiological_engine.set_gender(profile["gender"])
+        
+        # update monitoring thresholds based on patient characteristics
+        self._update_monitoring_thresholds(profile)
+    
+    def _update_monitoring_thresholds(self, profile: Dict[str, Any]):
+        """update monitoring thresholds based on patient characteristics"""
+        age = profile.get("age", 30)
+        
+        # adjust thresholds for age
+        if age < 18:  # pediatric
+            self.monitoring.alert_thresholds["heart_rate"]["high"] = 140
+            self.monitoring.alert_thresholds["blood_pressure_systolic"]["low"] = 80
+        elif age > 65:  # geriatric
+            self.monitoring.alert_thresholds["heart_rate"]["high"] = 100
+            self.monitoring.alert_thresholds["blood_pressure_systolic"]["high"] = 160
+        
+        # adjust for comorbidities
+        if "diabetes" in profile.get("comorbidities", []):
+            self.monitoring.alert_thresholds["glucose"]["high"] = 250
+        if "hypertension" in profile.get("comorbidities", []):
+            self.monitoring.alert_thresholds["blood_pressure_systolic"]["high"] = 160 

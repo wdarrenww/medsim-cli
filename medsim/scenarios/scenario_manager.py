@@ -9,7 +9,7 @@ import json
 import random
 
 from ..core.simulation import PatientState
-from ..core.physiology import PhysiologicalEngine
+from ..core.physiology import EnhancedPhysiologicalEngine
 from ..core.dialogue import AdvancedDialogueSystem
 
 
